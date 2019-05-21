@@ -1,0 +1,18 @@
+base: ubuntu:16.04
+environment:
+    - PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/appuser/fuzzbuzz/afl'
+setup:
+    - sudo apt-get update
+    - sudo apt-get install -y python3-setuptools python3-dev build-essential libssl-dev 
+    - pip3 install -U -r requirements.txt
+    - pip3 install -U -r requirements-dev.txt -c constraints.txt
+    - pip3 install -e .
+    - pip3 install "qiskit-ibmq-provider" -c constraints.txt
+    - python setup.py build_ext --inplace
+language: python
+version: "3.6"
+targets:
+  - name: optmization-levels
+    harness:
+      function: optmization_levels
+      file: test/fuzz/optimization_levels.py
