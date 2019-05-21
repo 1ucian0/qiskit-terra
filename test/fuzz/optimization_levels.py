@@ -33,8 +33,8 @@ class FuzzOptmizationLevels(QiskitTestCase):
 
     def __init__(self, Data):
         self.circuit = random_circuit(Data)
-        self.seed_simulator = int.from_bytes(Data, byteorder='little')
-        self.random_bool = Data[0]&4 == 0
+        self.seed_simulator = int.from_bytes(Data.read(1), byteorder='little')
+        self.random_bool = self.seed_simulator < 42
 
     def assertEqualCounts(self, *counts):
         average = {}
@@ -43,7 +43,6 @@ class FuzzOptmizationLevels(QiskitTestCase):
 
         for count in counts:
             for value in count.keys():
-                print(count[value], average[value])
                 self.assertEqual(count[value], average[value])
 
     def optmization_levels(self):
@@ -69,13 +68,13 @@ class FuzzOptmizationLevels(QiskitTestCase):
                            ).result().get_counts()
 
         if self.random_bool:
-            counts_3 = deepcopy(counts_2)
-        else:
             counts_3 = execute(deepcopy(circuit),
                            backend, optimization_level=3,
                            seed_simulator=seed_simulator,
                            seed_transpiler=seed_transpiler,
                            ).result().get_counts()
+        else:
+            counts_3 = deepcopy(counts_2)
 
         self.assertEqualCounts(counts_0, counts_1, counts_2, counts_3)
 
@@ -84,4 +83,6 @@ def optmization_levels(Data):
     test.optmization_levels()
 
 if __name__ == '__main__':
-    optmization_levels(b'\x00\x10')
+    import io
+    data = io.BytesIO(b"abcdef")
+    optmization_levels(data)
