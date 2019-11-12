@@ -671,7 +671,7 @@ class TextDrawing():
         return "= %s" % instruction.condition[1]
 
     @staticmethod
-    def params_for_label(instruction, controlled=False):
+    def params_for_label(instruction):
         """Get the params and format them to add them to a label. None if there
          are no params of if the params are numpy.ndarrays."""
         op = instruction.op
@@ -697,7 +697,7 @@ class TextDrawing():
             label = instruction.op.base_gate_name
         else:
             label = instruction.name
-        params = TextDrawing.params_for_label(instruction, controlled=controlled)
+        params = TextDrawing.params_for_label(instruction)
         label = label.capitalize()
         if params:
             label += "(%s)" % ','.join(params)
