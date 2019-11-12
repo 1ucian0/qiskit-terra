@@ -673,7 +673,7 @@ class TextDrawing():
     @staticmethod
     def params_for_label(instruction):
         """Get the params and format them to add them to a label. None if there
-         are no params of if the params are numpy.ndarrays."""
+         are no params or if the params are numpy.ndarrays."""
         op = instruction.op
         if not hasattr(op, 'params'):
             return None
