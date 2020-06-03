@@ -32,7 +32,9 @@ class Results:
             if os.path.exists(os.path.join(CWD, reference)):
                 ret += '<td><img src="' + reference + '"</td>'
             else:
-                ret += '<td>copy the reference file to the reference directory</td>'
+                ret += '<td style="text-align:center">' \
+                       'Add <a download="%s" href="%s">this image</a> ' \
+                       'to %s and push</td>' % (name, reference, reference)
             ret += '</tr>'
         ret += "</table>"
         return ret
