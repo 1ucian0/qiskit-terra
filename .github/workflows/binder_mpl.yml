@@ -3,7 +3,7 @@ on:
   pull_request:
     types: [opened, reopened]
     paths:
-    - 'qiskit/visualization/matplotlib.py'
+    - qiskit/visualization/matplotlib.py
 
 jobs:
   Create-Binder-Badge:
