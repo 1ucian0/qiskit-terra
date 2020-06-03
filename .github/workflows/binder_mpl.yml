@@ -3,7 +3,7 @@ on:
   pull_request:
     types: [opened, reopened]
     paths:
-    - '**/matplotlib.py'
+    - qiskit/visualization/matplotlib.py
 
 jobs:
   Create-Binder-Badge:
@@ -25,9 +25,7 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: "This PR affects matplotlib circuit drawer. Please, check the following Binder to run the tests (including your own).
-
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/${context.repo.owner}/${context.repo.repo}/${BRANCH_NAME}?filepath=test/binder/mpl_tester.ipynb) :arrow_left: Test MPL drawer with this branch"
+            body: `This PR affects matplotlib circuit drawer. Please, check the following Binder to run the tests (including your own).  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/${context.repo.owner}/${context.repo.repo}/${BRANCH_NAME}?filepath=test/binder/mpl_tester.ipynb) :arrow_left: Test MPL drawer with this branch`
           }) 
       env:
         BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
