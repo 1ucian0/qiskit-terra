@@ -143,5 +143,5 @@ qiskit/transpiler/passes/**/cython/**/*.cpp
 
 docs/stubs/*
 
-# binder images
-test/binder/*.png
+# Notebook testing images
+test/ipynb/*.png
