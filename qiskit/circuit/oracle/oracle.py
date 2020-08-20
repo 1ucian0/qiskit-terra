@@ -36,10 +36,6 @@ class Oracle(Gate):
 
         Args:
             source (str): Python code with type hints.
-
-        Raises:
-            ImportError: If tweedledum is not installed.
-            QiskitError: If source is not a string.
         """
         if not isinstance(source, str):
             raise QiskitError('Oracle needs a source code as a string.')
@@ -47,13 +43,48 @@ class Oracle(Gate):
             raise ImportError("To use the oracle compiler, tweedledum "
                               "must be installed. To install tweedledum run "
                               '"pip install tweedledum".')
+        self._ast = ast.parse(source)
+        self._network = None
+        self._scopes = None
+        self._args = None
+        self._name = None
+        super().__init__('oracle', num_qubits=sum([qreg.size for qreg in self.qregs]), params=[])
+
+    def compile(self):
         _oracle_visitor = OracleVisitor()
-        _oracle_visitor.visit(ast.parse(source))
+        _oracle_visitor.visit(self._ast)
         self._network = _oracle_visitor._network
-        self.scopes = _oracle_visitor.scopes
-        self.args = _oracle_visitor.args
-        self.name = _oracle_visitor.name
-        super().__init__(self.name, num_qubits=sum([qreg.size for qreg in self.qregs]), params=[])
+        self._scopes = _oracle_visitor.scopes
+        self._args = _oracle_visitor.args
+        self._name = _oracle_visitor.name
+
+    @property
+    def network(self):
+        if self._network is None:
+            self.compile()
+        return self._network
+
+    @property
+    def scopes(self):
+        if self._scopes is None:
+            self.compile()
+        return self._scopes
+
+    @property
+    def args(self):
+        if self._args is None:
+            self.compile()
+        return self._args
+
+    @property
+    def name(self):
+        if self._name is None:
+            self.compile()
+        return self._name
+
+    @name.setter
+    def name(self, oracle_name):
+        self._name = oracle_name
 
     @property
     def types(self):
