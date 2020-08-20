@@ -56,6 +56,7 @@ class Oracle(Gate):
                          params=[])
 
     def compile(self):
+        """Parses and creates the logical circuit"""
         _oracle_visitor = OracleVisitor()
         _oracle_visitor.visit(self._ast)
         self._network = _oracle_visitor._network
