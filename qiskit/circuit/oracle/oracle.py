@@ -30,12 +30,16 @@ from .oracle_visitor import OracleVisitor
 class Oracle(Gate):
     """An oracle object represents an oracle function and its logic network."""
 
-    def __init__(self, source):
+    def __init__(self, source, name=None):
         """Creates a ``Oracle`` from Python source code in ``source``. The code should be
         a single function with types.
 
         Args:
             source (str): Python code with type hints.
+            name (str): Optional. Default: "*oracle*". Oracle name.
+        Raises:
+            ImportError: If tweedledum is not installed.
+            QiskitError: If source is not a string.
         """
         if not isinstance(source, str):
             raise QiskitError('Oracle needs a source code as a string.')
@@ -47,8 +51,9 @@ class Oracle(Gate):
         self._network = None
         self._scopes = None
         self._args = None
-        self._name = None
-        super().__init__('oracle', num_qubits=sum([qreg.size for qreg in self.qregs]), params=[])
+        super().__init__(name or '*oracle*',
+                         num_qubits=sum([qreg.size for qreg in self.qregs]),
+                         params=[])
 
     def compile(self):
         _oracle_visitor = OracleVisitor()
@@ -56,35 +61,28 @@ class Oracle(Gate):
         self._network = _oracle_visitor._network
         self._scopes = _oracle_visitor.scopes
         self._args = _oracle_visitor.args
-        self._name = _oracle_visitor.name
+        self.name = _oracle_visitor.name
 
     @property
     def network(self):
+        """Returns the logical network"""
         if self._network is None:
             self.compile()
         return self._network
 
     @property
     def scopes(self):
+        """Returns the scope dict"""
         if self._scopes is None:
             self.compile()
         return self._scopes
 
     @property
     def args(self):
+        """Returns the oracle arguments"""
         if self._args is None:
             self.compile()
         return self._args
-
-    @property
-    def name(self):
-        if self._name is None:
-            self.compile()
-        return self._name
-
-    @name.setter
-    def name(self, oracle_name):
-        self._name = oracle_name
 
     @property
     def types(self):

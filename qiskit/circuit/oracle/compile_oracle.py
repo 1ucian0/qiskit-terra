@@ -37,4 +37,4 @@ def compile_oracle(func):
         Oracle: An object that can synthesis into a QuantumCircuit (via ``synth()`` method).
     """
     source = inspect.getsource(func).strip()
-    return Oracle(source)
+    return Oracle(source, name=func.__name__)
