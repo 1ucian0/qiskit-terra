@@ -22,3 +22,4 @@ features:
       quantum_circuit = network.synth(arg_regs=True)
       quantum_circuit.draw()) 
 
+    The feature requires ``tweedledum``, a library for synthesizing quantum circuits, that can be installed via pip with ``pip install tweedledum``. 
