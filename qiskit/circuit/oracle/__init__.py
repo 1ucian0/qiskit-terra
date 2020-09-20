@@ -44,6 +44,9 @@ QuantumCircuit:
       quantum_circuit = grover_oracle.synth()
       quantum_circuit.draw()
 
+Following Qiskit's little-endian bit ordering convention, the left-most bit (`a`) is the most
+significant bit and the right-most bit (`d`) is the least significant bit.
+
 Supplementary Information
 =========================
 
