@@ -13,7 +13,7 @@ features:
 
       network = compile_oracle(grover_oracle)
       quantum_circuit = network.synth()
-      quantum_circuit.draw()) 
+      quantum_circuit.draw()
 
     The parameter ``arg_regs`` in :meth:`qiskit.transpiler.oracle_compiler.LogicNetwork.synth` creates a circuit with registers refering to the parameter names:
 
