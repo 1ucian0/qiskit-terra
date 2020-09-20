@@ -103,6 +103,5 @@ Exceptions
    OracleCompilerTypeError
 
 """
-from .oracle import Oracle
 from .exceptions import OracleParseError, OracleCompilerError, OracleCompilerTypeError
 from .compile_oracle import compile_oracle as oracle
