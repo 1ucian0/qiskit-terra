@@ -10,11 +10,11 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Tests oracle compiler synthesis."""
+"""Tests classical_function compiler synthesis."""
 
 from qiskit.test import QiskitTestCase
 
-from qiskit.circuit.oracle.compile_oracle import compile_oracle
+from qiskit.circuit.classical_function.compile_classical_function import compile_classical_function
 
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.library.standard_gates import XGate
@@ -23,11 +23,11 @@ from . import examples
 
 
 class TestSynthesis(QiskitTestCase):
-    """Tests Oracle.synth method."""
+    """Tests ClassicalFunction.synth method."""
 
     def test_grover_oracle(self):
         """Synthesis of grover_oracle example"""
-        oracle = compile_oracle(examples.grover_oracle)
+        oracle = compile_classical_function(examples.grover_oracle)
         quantum_circuit = oracle.synth()
 
         expected = QuantumCircuit(5)
@@ -38,7 +38,7 @@ class TestSynthesis(QiskitTestCase):
 
     def test_grover_oracle_arg_regs(self):
         """Synthesis of grover_oracle example with arg_regs"""
-        oracle = compile_oracle(examples.grover_oracle)
+        oracle = compile_classical_function(examples.grover_oracle)
         quantum_circuit = oracle.synth(arg_regs=True)
 
         qr_a = QuantumRegister(1, 'a')

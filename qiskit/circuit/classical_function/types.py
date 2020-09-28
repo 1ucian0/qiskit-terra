@@ -10,7 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Oracle function types."""
+"""ClassicalFunction function types."""
 
 from typing import NewType
 

@@ -11,19 +11,19 @@
 # that they have been altered from the originals.
 
 """=============================================
-Oracle compiler (:mod:`qiskit.circuit.oracle.compile_oracle`)
+ClassicalFunction compiler (:mod:`qiskit.circuit.classical_function.compile_classical_function`)
 =============================================
 
-.. currentmodule:: qiskit.circuit.oracle.compile_oracle
+.. currentmodule:: qiskit.circuit.classical_function.compile_classical_function
 
 .. autofunction:: execute
 """
 
 import inspect
-from .oracle import Oracle
+from .classicalfunction import ClassicalFunction
 
 
-def compile_oracle(func):
+def compile_classical_function(func):
     """
     Parses and type checks the callable ``func`` to compile it into an ``Oracle``
     that can be synthesised into a ``QuantumCircuit``.
@@ -32,7 +32,7 @@ def compile_oracle(func):
         func (callable): A callable (with type hints) to compile into an Oracle.
 
     Returns:
-        Oracle: An object that can synthesis into a QuantumCircuit (via ``synth()`` method).
+        ClassicalFunction: An object that can synthesis into a QuantumCircuit (via ``synth()`` method).
     """
     source = inspect.getsource(func).strip()
-    return Oracle(source, name=func.__name__)
+    return ClassicalFunction(source, name=func.__name__)

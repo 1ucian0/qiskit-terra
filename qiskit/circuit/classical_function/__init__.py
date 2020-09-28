@@ -11,31 +11,31 @@
 # that they have been altered from the originals.
 """
 =====================================
-Oracle compiler (:mod:`qiskit.circuit.oracle`)
+ClassicalFunction compiler (:mod:`qiskit.circuit.classical_function`)
 =====================================
 
-.. currentmodule:: qiskit.circuit.oracle
+.. currentmodule:: qiskit.circuit.classical_function
 
 Overview
 ========
 
 Oracles play an essential role in different quantum algorithms, e.g., Grover's
-algorithm.  An oracle is a "black box" with a reliable behavior.  Theoretically,
+algorithm.  An classical_function is a "black box" with a reliable behavior.  Theoretically,
 its implementation does not need to be specified.  However, to execute an
-algorithm that relies on an oracle in the real world, we need a concrete
+algorithm that relies on an classical_function in the real world, we need a concrete
 implementation.
 
-The oracle compiler provides the necessary tools to map a classical
+The classical_function compiler provides the necessary tools to map a classical
 irreversible functions into quantum circuits.  Below is a simple example of
 how to synthesize a simple boolean function defined using Python into a
 QuantumCircuit:
 
    .. jupyter-execute::
 
-      from qiskit.circuit.oracle import oracle
-      from qiskit.circuit.oracle.types import Int1
+      from qiskit.circuit.classical_function import classical_function
+      from qiskit.circuit.classical_function.types import Int1
 
-      @oracle
+      @classical_function
       def grover_oracle(a: Int1, b: Int1, c: Int1, d: Int1) -> Int1:
           return (not a and b and not c and d)
 
@@ -56,39 +56,39 @@ Supplementary Information
 
    Tweedledum is a C++-17 header-only library that implements a large set of
    reversible (and quantum) synthesis, optimization, and mapping algorithms.
-   The oracle compiler relies on it and its dependencies to both represent logic
+   The classical_function compiler relies on it and its dependencies to both represent logic
    networks and synthesize them into quantum circuits.
 
 .. container:: toggle
 
    .. container:: header
 
-      **Oracle data types**
+      **ClassicalFunction data types**
 
-   At the moment, the only type supported by the oracle compilers is
-   ``qiskit.circuit.oracle.types.Int1``. The oracle function
+   At the moment, the only type supported by the classical_function compilers is
+   ``qiskit.circuit.classical_function.types.Int1``. The classical_function function
    to parse *must* include type hints (just ``Int1`` for now).
 
-   The type ``Int1`` means the oracle will only operate at bit level.
+   The type ``Int1`` means the classical_function will only operate at bit level.
 
 
-Oracle compiler API
+ClassicalFunction compiler API
 ===================
 
-oracle
+classical_function
 ------
 
-Alias for ``qiskit.circuit.oracle.compile_oracle.compile_oracle``.
+Alias for ``qiskit.circuit.classical_function.compile_classical_function.compile_classical_function``.
 It can be used as a decorator.
 
 
-Oracle
+ClassicalFunction
 ------
 
 .. autosummary::
    :toctree: ../stubs/
 
-   Oracle
+   ClassicalFunction
 
 Exceptions
 ----------
@@ -96,10 +96,10 @@ Exceptions
 .. autosummary::
    :toctree: ../stubs/
 
-   OracleCompilerTypeError
-   OracleParseError
-   OracleCompilerTypeError
+   ClassicalFunctionCompilerTypeError
+   ClassicalFunctionParseError
+   ClassicalFunctionCompilerTypeError
 
 """
-from .exceptions import OracleParseError, OracleCompilerError, OracleCompilerTypeError
-from .compile_oracle import compile_oracle as oracle
+from .exceptions import ClassicalFunctionParseError, ClassicalFunctionCompilerError, ClassicalFunctionCompilerTypeError
+from .compile_classical_function import compile_classical_function as oracle

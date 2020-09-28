@@ -13,7 +13,7 @@
 """Tests LogicNetwork.simulate method."""
 
 from ddt import ddt, data
-from qiskit.circuit.oracle.compile_oracle import compile_oracle
+from qiskit.circuit.classical_function.compile_classical_function import compile_classical_function
 from qiskit.test import QiskitTestCase
 from .utils import get_truthtable_from_function, example_list
 
@@ -24,6 +24,6 @@ class TestSimulate(QiskitTestCase):
     @data(*example_list())
     def test_(self, a_callable):
         """Tests LogicSimulate.simulate() on all the examples"""
-        network = compile_oracle(a_callable)
+        network = compile_classical_function(a_callable)
         truth_table = network.simulate()
         self.assertEqual(truth_table, get_truthtable_from_function(a_callable))

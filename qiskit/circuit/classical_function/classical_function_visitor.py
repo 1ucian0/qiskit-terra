@@ -11,7 +11,7 @@
 # that they have been altered from the originals.
 
 """Node visitor as defined in https://docs.python.org/3/library/ast.html#ast.NodeVisitor
-This module is used internally by ``qiskit.transpiler.oracle.Oracle``.
+This module is used internally by ``qiskit.transpiler.classical_function.ClassicalFunction``.
 """
 
 import ast
@@ -21,7 +21,7 @@ try:
 except Exception:  # pylint: disable=broad-except
     HAS_TWEEDLEDUM = False
 import _ast
-from .exceptions import OracleParseError, OracleCompilerTypeError
+from .exceptions import ClassicalFunctionParseError, ClassicalFunctionCompilerTypeError
 
 
 class OracleVisitor(ast.NodeVisitor):
@@ -37,7 +37,7 @@ class OracleVisitor(ast.NodeVisitor):
 
     def __init__(self):
         if not HAS_TWEEDLEDUM:
-            raise ImportError("To use the oracle compiler, tweedledum "
+            raise ImportError("To use the classical_function compiler, tweedledum "
                               "must be installed. To install tweedledum run "
                               '"pip install tweedledum".')
         self.scopes = []
@@ -49,14 +49,14 @@ class OracleVisitor(ast.NodeVisitor):
     def visit_Module(self, node):
         """The full snippet should contain a single function"""
         if len(node.body) != 1 and not isinstance(node.body[0], ast.FunctionDef):
-            raise OracleParseError("just functions, sorry!")
+            raise ClassicalFunctionParseError("just functions, sorry!")
         self.name = node.body[0].name
         self.visit(node.body[0])
 
     def visit_FunctionDef(self, node):
         """The function definition should have type hints"""
         if node.returns is None:
-            raise OracleParseError("return type is needed")
+            raise ClassicalFunctionParseError("return type is needed")
         scope = {'return': (node.returns.id, None), node.returns.id: ('type', None)}
 
         # Extend scope with the decorator's names
@@ -71,7 +71,7 @@ class OracleVisitor(ast.NodeVisitor):
         """The return type should match the return type hint."""
         _type, signal = self.visit(node.value)
         if _type != self.scopes[-1]['return'][0]:
-            raise OracleParseError("return type error")
+            raise ClassicalFunctionParseError("return type error")
         self._network.create_po(signal)
 
     def visit_Assign(self, node):
@@ -85,16 +85,16 @@ class OracleVisitor(ast.NodeVisitor):
         """Uses OracleVisitor.bitops to extend self._network"""
         bitop = OracleVisitor.bitops.get(type(op))
         if not bitop:
-            raise OracleParseError("Unknown binop.op %s" % op)
+            raise ClassicalFunctionParseError("Unknown binop.op %s" % op)
         binop = getattr(self._network, bitop)
 
         left_type, left_signal = values[0]
         if left_type != 'Int1':
-            raise OracleParseError("binop type error")
+            raise ClassicalFunctionParseError("binop type error")
 
         for right_type, right_signal in values[1:]:
             if right_type != 'Int1':
-                raise OracleParseError("binop type error")
+                raise ClassicalFunctionParseError("binop type error")
             left_signal = binop(left_signal, right_signal)
 
         return 'Int1', left_signal
@@ -113,18 +113,18 @@ class OracleVisitor(ast.NodeVisitor):
         """Handles ``~``. Cannot operate on Int1s. """
         operand_type, operand_signal = self.visit(node.operand)
         if operand_type != 'Int1':
-            raise OracleCompilerTypeError(
+            raise ClassicalFunctionCompilerTypeError(
                 "UntaryOp.op %s only support operation on Int1s for now" % node.op)
         bitop = OracleVisitor.bitops.get(type(node.op))
         if not bitop:
-            raise OracleCompilerTypeError(
+            raise ClassicalFunctionCompilerTypeError(
                 "UntaryOp.op %s does not operate with Int1 type " % node.op)
         return 'Int1', getattr(self._network, bitop)(operand_signal)
 
     def visit_Name(self, node):
         """Reduce variable names. """
         if node.id not in self.scopes[-1]:
-            raise OracleParseError('out of scope: %s' % node.id)
+            raise ClassicalFunctionParseError('out of scope: %s' % node.id)
         return self.scopes[-1][node.id]
 
     def generic_visit(self, node):
@@ -132,13 +132,13 @@ class OracleVisitor(ast.NodeVisitor):
         if isinstance(node, (_ast.arguments, _ast.arg, _ast.Load, _ast.BitAnd,
                              _ast.BitOr, _ast.BitXor, _ast.BoolOp, _ast.Or)):
             return super().generic_visit(node)
-        raise OracleParseError("Unknown node: %s" % type(node))
+        raise ClassicalFunctionParseError("Unknown node: %s" % type(node))
 
     def extend_scope(self, args_node: _ast.arguments) -> None:
         """Add the arguments to the scope"""
         for arg in args_node.args:
             if arg.annotation is None:
-                raise OracleParseError("argument type is needed")
+                raise ClassicalFunctionParseError("argument type is needed")
             self.args.append(arg.arg)
             self.scopes[-1][arg.annotation.id] = ('type', None)
             self.scopes[-1][arg.arg] = (arg.annotation.id, self._network.create_pi())

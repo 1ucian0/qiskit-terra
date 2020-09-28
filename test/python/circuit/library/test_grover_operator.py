@@ -46,7 +46,7 @@ class TestGroverOperator(QiskitTestCase):
 
     def test_grover_operator(self):
         """Test the base case for the Grover operator."""
-        with self.subTest('single Z oracle'):
+        with self.subTest('single Z classical_function'):
             oracle = QuantumCircuit(3)
             oracle.z(2)  # good state if last qubit is 1
             grover_op = GroverOperator(oracle)

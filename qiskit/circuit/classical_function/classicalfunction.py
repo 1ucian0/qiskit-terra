@@ -10,7 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Oracle class"""
+"""ClassicalFunction class"""
 
 import ast
 try:
@@ -22,34 +22,34 @@ from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.gate import Gate
 from qiskit.exceptions import QiskitError
 from qiskit.transpiler.oracle_synthesis.utils import tweedledum2qiskit
-from .oracle_visitor import OracleVisitor
+from .classical_function_visitor import OracleVisitor
 
 
-class Oracle(Gate):
-    """An oracle object represents an oracle function and its logic network."""
+class ClassicalFunction(Gate):
+    """An classical_function object represents an classical_function function and its logic network."""
 
     def __init__(self, source, name=None):
-        """Creates a ``Oracle`` from Python source code in ``source``. The code should be
+        """Creates a ``ClassicalFunction`` from Python source code in ``source``. The code should be
         a single function with types.
 
         Args:
             source (str): Python code with type hints.
-            name (str): Optional. Default: "*oracle*". Oracle name.
+            name (str): Optional. Default: "*classical_function*". ClassicalFunction name.
         Raises:
             ImportError: If tweedledum is not installed.
             QiskitError: If source is not a string.
         """
         if not isinstance(source, str):
-            raise QiskitError('Oracle needs a source code as a string.')
+            raise QiskitError('ClassicalFunction needs a source code as a string.')
         if not HAS_TWEEDLEDUM:
-            raise ImportError("To use the oracle compiler, tweedledum "
+            raise ImportError("To use the classical_function compiler, tweedledum "
                               "must be installed. To install tweedledum run "
                               '"pip install tweedledum".')
         self._ast = ast.parse(source)
         self._network = None
         self._scopes = None
         self._args = None
-        super().__init__(name or '*oracle*',
+        super().__init__(name or '*classical_function*',
                          num_qubits=sum([qreg.size for qreg in self.qregs]),
                          params=[])
 
@@ -78,7 +78,7 @@ class Oracle(Gate):
 
     @property
     def args(self):
-        """Returns the oracle arguments"""
+        """Returns the classical_function arguments"""
         if self._args is None:
             self.compile()
         return self._args
@@ -116,12 +116,12 @@ class Oracle(Gate):
         return tweedledum2qiskit(synthesize_xag(self._network), name=self.name, qregs=qregs)
 
     def _define(self):
-        """The definition of the oracle is its synthesis"""
+        """The definition of the classical_function is its synthesis"""
         self.definition = self.synth()
 
     @property
     def qregs(self):
-        """The list of qregs used by the oracle"""
+        """The list of qregs used by the classical_function"""
         qregs = [QuantumRegister(1, name=arg) for arg in self.args if self.types[0][arg] == 'Int1']
         qregs.reverse()
         if self.types[0]['return'] == 'Int1':

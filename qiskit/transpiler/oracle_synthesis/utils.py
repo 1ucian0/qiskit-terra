@@ -10,12 +10,12 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Internal utils for Oracle Compiler"""
+"""Internal utils for ClassicalFunction Compiler"""
 
 from qiskit import QuantumCircuit
 from qiskit.circuit.library.standard_gates import ZGate, TGate, SGate, TdgGate, SdgGate, U1Gate, \
     XGate, HGate, U3Gate
-from qiskit.circuit.oracle.exceptions import OracleCompilerError
+from qiskit.circuit.classical_function.exceptions import ClassicalFunctionCompilerError
 
 
 def tweedledum2qiskit(tweedledum_circuit, name=None, qregs=None):
@@ -40,7 +40,7 @@ def tweedledum2qiskit(tweedledum_circuit, name=None, qregs=None):
         QuantumCircuit: The Tweedledum circuit converted to a Qiskit circuit.
 
     Raises:
-        OracleCompilerError: If there a gate in the Tweedledum circuit has no Qiskit equivalent.
+        ClassicalFunctionCompilerError: If there a gate in the Tweedledum circuit has no Qiskit equivalent.
     """
     gates = {'z': ZGate, 't': TGate, 's': SGate, 'tdg': TdgGate, 'sdg': SdgGate, 'u1': U1Gate,
              'x': XGate, 'h': HGate, 'u3': U3Gate}
@@ -51,8 +51,8 @@ def tweedledum2qiskit(tweedledum_circuit, name=None, qregs=None):
     for gate in tweedledum_circuit['gates']:
         basegate = gates.get(gate['gate'].lower())
         if basegate is None:
-            raise OracleCompilerError('The Tweedledum gate %s has no Qiskit equivalent'
-                                      % gate['gate'])
+            raise ClassicalFunctionCompilerError('The Tweedledum gate %s has no Qiskit equivalent'
+                                                 % gate['gate'])
 
         ctrl_qubits = gate.get('control_qubits', [])
         trgt_qubits = gate.get('qubits', [])

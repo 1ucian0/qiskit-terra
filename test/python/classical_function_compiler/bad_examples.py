@@ -12,9 +12,9 @@
 
 # pylint: disable=invalid-name, missing-function-docstring, undefined-variable
 
-"""These are bad examples and raise errors in in the oracle compiler"""
+"""These are bad examples and raise errors in in the classical_function compiler"""
 
-from qiskit.circuit.oracle.types import Int1, Int2
+from qiskit.circuit.classical_function.types import Int1, Int2
 
 
 def id_no_type_arg(a) -> Int1:
