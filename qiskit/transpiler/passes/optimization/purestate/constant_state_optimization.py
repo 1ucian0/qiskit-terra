@@ -13,9 +13,8 @@
 """Optimize CXs and Swaps when on constants."""
 
 from qiskit.transpiler.basepasses import TransformationPass
-from qiskit.extensions.standard import SwapGate, XGate, YGate, ZGate, SGate, TGate, SdgGate, \
-    TdgGate, HGate
-
+from qiskit.circuit.library.standard_gates import SwapGate, XGate, YGate, ZGate, SGate, TGate,\
+    SdgGate, TdgGate, HGate
 from qiskit.circuit import QuantumRegister, ControlledGate, Reset
 from qiskit.dagcircuit import DAGCircuit
 from .aswap_gate import ASwapGate
@@ -73,7 +72,7 @@ class ConstantsStateOptimization(TransformationPass):
         Returns:
             DAGCircuit: Optimized DAG.
         """
-        self.wire_state = WireStatus(dag.qubits())
+        self.wire_state = WireStatus(dag.qubits)
 
         for node in dag.topological_op_nodes():
             if isinstance(node.op, ControlledGate):

@@ -12,7 +12,7 @@
 
 """Main Module"""
 
-from purestate.constant_state_optimization import ConstantsStateOptimization
-from purestate.aswap_gate import ASwapGate
-from purestate.state_annotation import StateAnnotation
-from purestate.pure_state_on_U import PureStateOnU
+from .constant_state_optimization import ConstantsStateOptimization
+from .aswap_gate import ASwapGate
+from .state_annotation import StateAnnotation
+from .pure_state_on_U import PureStateOnU

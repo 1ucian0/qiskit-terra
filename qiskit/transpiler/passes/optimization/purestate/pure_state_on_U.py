@@ -17,17 +17,15 @@ import math
 
 from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.basepasses import TransformationPass
-from qiskit.extensions.standard import XGate, SwapGate, YGate, ZGate, SGate, TGate, SdgGate, \
-    TdgGate, HGate, ZGate, CzGate, U1Gate, U2Gate, U3Gate, RXGate, RYGate, RZGate
+from qiskit.circuit.library.standard_gates import XGate, SwapGate, YGate, ZGate, SGate, TGate, \
+    SdgGate, TdgGate, HGate, ZGate, CZGate, U1Gate, U2Gate, U3Gate, RXGate, RYGate, RZGate
 
-from qiskit.circuit import ControlledGate, Reset
 from qiskit.dagcircuit import DAGCircuit
 from .aswap_gate import ASwapGate
 from .state_annotation import StateAnnotation
 from qiskit.circuit import QuantumRegister, ControlledGate, Reset
 
-
-from qiskit.quantum_info.operators import Quaternion
+from qiskit.quantum_info.synthesis import Quaternion
 
 _CHOP_THRESHOLD = 1e-15
 
@@ -46,7 +44,7 @@ class PureStateOnU(TransformationPass):
         Returns:
             DAGCircuit: DAG without some swaps.
         """
-        self.wire_state = WireStatus(dag.qubits())
+        self.wire_state = WireStatus(dag.qubits)
 
         for node in dag.topological_op_nodes():
             if isinstance(node.op, ControlledGate):

@@ -20,7 +20,7 @@ ASWAP:
 """
 from qiskit.circuit import ControlledGate
 from qiskit.circuit import Gate
-from qiskit.circuit import QuantumRegister
+from qiskit.circuit import QuantumRegister, QuantumCircuit
 import numpy
 
 
@@ -35,15 +35,11 @@ class ASwapGate(Gate):
         """
         gate aswap a,b { cx b,a; cx a,b; }
         """
-        from qiskit.extensions.standard.x import CXGate
-        definition = []
-        q = QuantumRegister(2, "q")
-        rule = [
-            (CXGate(), [q[1], q[0]], []),
-            (CXGate(), [q[0], q[1]], [])
-        ]
-        for inst in rule:
-            definition.append(inst)
+        q = QuantumRegister(2, 'q')
+        definition = QuantumCircuit(q, name=self.name)
+        definition.cx(q[1], q[0])
+        definition.cx(q[0], q[1])
+
         self.definition = definition
 
     def inverse(self):
