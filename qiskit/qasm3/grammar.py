@@ -17,10 +17,10 @@ class Class:
 class Program(Class):
     def __init__(self, header, statements=None):
         self.header = header
-        self.statements = statements
+        self.statements = statements or []
 
-    def qasm_lines(self):
-        ret = [self.header.qasm()]
+    def qasm(self):
+        ret = self.header.qasm()
         for statement in self.statements:
             ret.append(statement.qasm())
         return ret
@@ -31,6 +31,12 @@ class Header(Class):
         self.version = version
         self.includes = includes
 
+    def qasm(self):
+        ret = self.version.qasm()
+        for include in self.includes:
+            ret.append(include.qasm())
+        return ret
+
 
 class Include(Class):
     def __init__(self, filenames):
@@ -40,6 +46,9 @@ class Include(Class):
         """
         self.filenames = filenames
 
+    def qasm(self):
+        return [f'include {filename};' for filename in self.filenames]
+
 
 class Version(Class):
     def __init__(self, version_number):
@@ -48,3 +57,25 @@ class Version(Class):
             : 'OPENQASM'(Integer | RealNumber) SEMICOLON
         """
         self.version_number = version_number
+
+    def qasm(self):
+        return [f'OPENQASM {self.version_number};']
+
+
+class QuantumDeclaration(Class):
+    def __init__(self, identifier, designator=None):
+        """
+        quantumDeclaration
+            : 'qreg' Identifier designator? |  NOT SUPPORTED
+             'qubit' designator? Identifier
+        """
+        self.identifier = identifier
+        self.designator = designator
+
+
+class Identifier(Class):
+    def __init__(self, string):
+        """
+        Identifier : FirstIdCharacter GeneralIdCharacter* ;
+        """
+        self.string = string

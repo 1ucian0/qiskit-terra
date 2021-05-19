@@ -17,21 +17,25 @@ class Exporter:
     def __init__(
         self,
         quantumcircuit,  # QuantumCircuit
-        qasm_version=None,  # int or float
         includes=None,  # list[filename:str]
     ):
         self.quantumcircuit = quantumcircuit
-        self.qasm_version = qasm_version or self.minimum_qasm_version()
         self.includes = includes or self.requiered_includes()
+
+    def requiered_includes(self):
+        return []
 
     def dump(self):
         program = self.build_program()
-        return program.qasm_list()
+        return program.qasm()
 
     def build_header(self):
-        version = Version(self.qasm_version)
+        version = Version('3')
         includes = [Include(filename) for filename in self.includes]
         return Header(version, includes)
 
     def build_program(self):
-        return Program(self.build_header())
+        return Program(self.build_header(), self.build_statements())
+
+    def build_statements(self):
+        quantumdeclaration = QuantumDeclaration(identifier)
