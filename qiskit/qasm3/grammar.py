@@ -62,8 +62,90 @@ class Version(Class):
         return [f'OPENQASM {self.version_number};']
 
 
+class QuantumInstruction(Class):
+    def __init__(self):
+        """
+        quantumInstruction
+            : quantumGateCall
+            | quantumPhase
+            | quantumMeasurement
+            | quantumReset
+            | quantumBarrier
+        """
+        pass
+
+    def qasm(self):
+        return ""
+
+class Identifier(Class):
+    def __init__(self, string):
+        """
+        Identifier : FirstIdCharacter GeneralIdCharacter* ;
+        """
+        self.string = string
+
+    def qasm(self):
+        return self.string
+
+class IndexIdentifier(Identifier):
+    """
+    indexIdentifier
+        : Identifier rangeDefinition
+        | Identifier ( LBRACKET expressionList RBRACKET )?
+        | indexIdentifier '||' indexIdentifier
+    """
+    pass
+
+
+class Expression(Class):
+    """
+    expression
+        // include terminator/unary as base cases to simplify parsing
+        : expressionTerminator
+        | unaryExpression
+        // expression hierarchy
+        | xOrExpression
+        | expression '|' xOrExpression
+    """
+
+    def __init__(self, something):
+        self.something = something  # TODO
+
+    def qasm(self):
+        return str(self.something)
+
+
+class IndexIdentifier2(IndexIdentifier):
+    """
+    indexIdentifier
+        : Identifier rangeDefinition
+        | Identifier ( LBRACKET expressionList RBRACKET )? <--
+        | indexIdentifier '||' indexIdentifier
+    """
+    def __init__(self, identifier:Identifier, expressionList:[Expression]):
+        self.identifier = identifier
+        self.expressionList = expressionList
+
+    def qasm(self):
+        return f"{self.identifier.qasm()}[{', '.join([i.qasm() for i in self.expressionList])}]"
+
+class Integer(Expression):
+    pass
+
+
+class Designator(Class):
+    def __init__(self, expression: Expression):
+        """
+        designator
+            : LBRACKET expression RBRACKET
+        """
+        self.expression = expression
+
+    def qasm(self):
+        return f"[{self.expression.qasm()}]"
+
 class QuantumDeclaration(Class):
-    def __init__(self, identifier, designator=None):
+    def __init__(self, identifier: Identifier, designator=None):
         """
         quantumDeclaration
             : 'qreg' Identifier designator? |  NOT SUPPORTED
@@ -72,10 +154,27 @@ class QuantumDeclaration(Class):
         self.identifier = identifier
         self.designator = designator
 
+    def qasm(self):
+        return f"qubit{self.designator.qasm()} {self.identifier.qasm()};"
 
-class Identifier(Class):
-    def __init__(self, string):
-        """
-        Identifier : FirstIdCharacter GeneralIdCharacter* ;
-        """
-        self.string = string
+class QuantumGateCall(Class):
+    """
+    quantumGateCall
+        : quantumGateModifier* quantumGateName ( LPAREN expressionList? RPAREN )? indexIdentifierList
+    """
+    def __init__(self, quantumGateName: Identifier,
+                 indexIdentifierList: [Identifier],
+                 expressionList=None,
+                 quantumGateModifier=None):
+        self.quantumGateName = quantumGateName
+        self.indexIdentifierList = indexIdentifierList
+        self.expressionList = expressionList
+        self.quantumGateModifier = quantumGateModifier
+
+    def qasm(self):
+        return f"{self.quantumGateName.qasm()} " \
+               f"{', '.join([i.qasm() for i in self.indexIdentifierList])};"
+
+class Skip(Class):
+    def qasm(self):
+        return ""
