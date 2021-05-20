@@ -139,6 +139,32 @@ class IndexIdentifier2(IndexIdentifier):
     def qasm(self):
         return f"{self.identifier.qasm()}[{', '.join([i.qasm() for i in self.expressionList])}]"
 
+class QuantumMeasurement(Class):
+    """
+    quantumMeasurement
+        : 'measure' indexIdentifierList
+    """
+    def __init__(self, indexIdentifierList: [Identifier]):
+        self.indexIdentifierList = indexIdentifierList
+
+    def qasm(self):
+        return f"measure {', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
+
+class QuantumMeasurementAssignment(Statement):
+    """
+    quantumMeasurementAssignment
+        : quantumMeasurement ( ARROW indexIdentifierList)?
+        | indexIdentifierList EQUALS quantumMeasurement  # eg: bits = measure qubits;
+    """
+    def __init__(self,
+                 indexIdentifierList: [Identifier],
+        quantumMeasurement: QuantumMeasurement):
+
+        self.indexIdentifierList = indexIdentifierList
+        self.quantumMeasurement = quantumMeasurement
+
+    def qasm(self):
+        return [f"{self.indexIdentifierList[0].qasm()} = {self.quantumMeasurement.qasm()}"]
 
 class Integer(Expression):
     pass
@@ -244,7 +270,7 @@ class ProgramBlock(Class):
         self.statements = statements
 
     def qasm(self):
-        return ["{\n"] + [stmt.qasm() for stmt in self.statements] + ["}"]
+        return ["{\n"] + [stmt.qasm() for stmt in self.statements] + ["}\n"]
 
 
 class BooleanExpression(Class):

@@ -11,7 +11,7 @@
 # that they have been altered from the originals.
 
 from .grammar import *
-from qiskit.circuit import Gate, Barrier
+from qiskit.circuit import Gate, Barrier, Measure
 from qiskit.circuit.bit import Bit
 
 class Exporter:
@@ -113,6 +113,10 @@ class Exporter:
             elif isinstance(instruction[0], Barrier):
                 indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
                 ret.append(QuantumBarrier(indexIdentifierList))
+            elif isinstance(instruction[0], Measure):
+                quantumMeasurement = QuantumMeasurement(self.build_indexIdentifierlist(instruction[1]))
+                indexIdentifierList = self.build_indexIdentifierlist(instruction[2])
+                ret.append(QuantumMeasurementAssignment(indexIdentifierList, quantumMeasurement))
             else:
                 raise NotImplementedError(f'{instruction[0]} is not implemented in the QASM3 exporter')
         return ret
