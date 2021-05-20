@@ -26,7 +26,19 @@ class Exporter:
     def requiered_includes(self):
         return []  # TODO
 
-    def dump_lines(self):
+    def dump(self):
+        tree = self.qasm_tree()
+        return self.flatten_tree(tree)
+
+    def flatten_tree(self, tree):
+        ret = ''
+        if isinstance(tree, str):
+            return tree
+        for child in tree:
+            ret += self.flatten_tree(child)
+        return ret
+
+    def qasm_tree(self):
         program = self.build_program()
         return program.qasm()
 
@@ -65,11 +77,11 @@ class Exporter:
         quantuminstructions = self.build_quantuminstructions(self.quantumcircuit.data)
         ret = []
         if bitdeclarations:
-            ret += [Skip()] + bitdeclarations
+            ret += bitdeclarations
         if quantumdeclarations:
-            ret += [Skip()] + quantumdeclarations
+            ret += quantumdeclarations
         if quantuminstructions:
-            ret += [Skip()] + quantuminstructions
+            ret += quantuminstructions
         return ret
 
     def build_bitdeclarations(self):
@@ -89,7 +101,13 @@ class Exporter:
         for instruction in instructions:
             if isinstance(instruction[0], Gate):
                 if instruction[0].condition:
-                    ret.append(self.build_branchingstatement(instruction))
+                    eqcondition = self.build_eqcondition(instruction[0].condition)
+                    instruciton_without_condition = instruction[0].copy()
+                    instruciton_without_condition.condition = None
+                    programTrue = self.build_programblock([(instruciton_without_condition,
+                                                            instruction[1],
+                                                            instruction[2])])
+                    ret.append(BranchingStatement(eqcondition, programTrue))
                 else:
                     ret.append(self.build_quantumgatecall(instruction))
             elif isinstance(instruction[0], Barrier):
@@ -98,11 +116,6 @@ class Exporter:
             else:
                 raise NotImplementedError(f'{instruction[0]} is not implemented in the QASM3 exporter')
         return ret
-
-    def build_branchingstatement(self, instruction):
-        eqcondition = self.build_eqcondition(instruction[0].condition)
-        programTrue = self.build_programblock([instruction])
-        return BranchingStatement(eqcondition, programTrue)
 
     def build_programblock(self, instructions):
         return ProgramBlock(self.build_quantuminstructions(instructions))

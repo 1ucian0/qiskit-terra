@@ -24,4 +24,4 @@ from .exporter import Exporter
 
 def dump(quantumcircuit):
     exporter = Exporter(quantumcircuit)
-    return exporter.dump_lines()
+    return exporter.qasm_tree()

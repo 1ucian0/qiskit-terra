@@ -38,7 +38,7 @@ class Header(Class):
         self.includes = includes
 
     def qasm(self):
-        ret = self.version.qasm()
+        ret = [self.version.qasm()]
         for include in self.includes:
             ret.append(include.qasm())
         return ret
@@ -53,7 +53,7 @@ class Include(Class):
         self.filenames = filenames
 
     def qasm(self):
-        return [f"include {filename};" for filename in self.filenames]
+        return [f"include {filename};\n" for filename in self.filenames]
 
 
 class Version(Class):
@@ -65,7 +65,7 @@ class Version(Class):
         self.version_number = version_number
 
     def qasm(self):
-        return [f"OPENQASM {self.version_number};"]
+        return [f"OPENQASM {self.version_number};\n"]
 
 
 class QuantumInstruction(Class):
@@ -168,7 +168,7 @@ class BitDeclaration(Class):
         self.equalsExpression = equalsExpression
 
     def qasm(self):
-        return f"bit{self.designator.qasm()} {self.identifier.qasm()};"
+        return [f"bit{self.designator.qasm()} {self.identifier.qasm()};\n"]
 
 
 class QuantumDeclaration(Class):
@@ -182,7 +182,7 @@ class QuantumDeclaration(Class):
         self.designator = designator
 
     def qasm(self):
-        return f"qubit{self.designator.qasm()} {self.identifier.qasm()};"
+        return [f"qubit{self.designator.qasm()} {self.identifier.qasm()};\n"]
 
 
 class QuantumGateCall(QuantumInstruction):
@@ -208,12 +208,12 @@ class QuantumGateCall(QuantumInstruction):
             return (
                 f"{self.quantumGateName.qasm()}"
                 f"({', '.join([e.qasm() for e in self.expressionList])}) "
-                f"{', '.join([i.qasm() for i in self.indexIdentifierList])};"
+                f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
             )
 
         return (
             f"{self.quantumGateName.qasm()} "
-            f"{', '.join([i.qasm() for i in self.indexIdentifierList])};"
+            f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
         )
 
 
@@ -227,7 +227,7 @@ class QuantumBarrier(QuantumInstruction):
         self.indexIdentifierList = indexIdentifierList
 
     def qasm(self):
-        return f'barrier {", ".join([i.qasm() for i in self.indexIdentifierList])};'
+        return [f'barrier {", ".join([i.qasm() for i in self.indexIdentifierList])};']
 
 
 class BooleanExpression(Class):
@@ -244,7 +244,7 @@ class ProgramBlock(Class):
         self.statements = statements
 
     def qasm(self):
-        return ["{"] + [stmt.qasm() for stmt in self.statements] + ["}"]
+        return ["{\n"] + [stmt.qasm() for stmt in self.statements] + ["}"]
 
 
 class BooleanExpression(Class):
@@ -307,12 +307,9 @@ class BranchingStatement(Statement):
         self.programFalse = programFalse
 
     def qasm(self):
-        ret = f"if ({self.booleanExpression.qasm()})" + self.programTrue.qasm()
+        ret = [f"if ({self.booleanExpression.qasm()})"] + self.programTrue.qasm()
 
         if self.programFalse:
-            ret += 'else' + self.programFalse.qasm()
+            ret += ['else'] + self.programFalse.qasm()
         return ret
 
-class Skip(Statement):
-    def qasm(self):
-        return ""

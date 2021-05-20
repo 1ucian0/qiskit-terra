@@ -62,7 +62,7 @@ class TestCircuitQasm3(QiskitTestCase):
             'z qr1[0];',
             'barrier qr1[0], qr2[0], qr2[1];'
         ]
-        self.assertEqual(Exporter(qc).dump_lines(), expected_qasm)
+        self.assertEqual(Exporter(qc).qasm_tree(), expected_qasm)
 
 
 #     def test_circuit_qasm_with_composite_circuit(self):
