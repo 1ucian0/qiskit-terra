@@ -23,8 +23,6 @@ class Exporter:
     ):
         self.quantumcircuit = quantumcircuit
         self.includes = includes or []
-        self.instruction_in_scope = []
-        self.gate_in_scope = []
 
     def requiered_includes(self):
         return []  # TODO
@@ -42,8 +40,20 @@ class Exporter:
         return ret
 
     def qasm_tree(self):
-        program = self.build_program()
-        return program.qasm()
+        return Qasm3Builder(self.quantumcircuit, self.includes).build_program().qasm()
+
+class Qasm3Builder:
+    def __init__(self, quantumcircuit, includeslist):
+        self.quantumcircuit = quantumcircuit
+        self.includeslist = includeslist
+        self._instruction_in_scope = []
+        self._gate_in_scope = []
+
+    def _register_gate(self, gate):
+        self._gate_in_scope.append(gate)
+
+    def _register_instruction(self, instruction):
+        self._instruction_in_scope.append(instruction)
 
     def build_header(self):
         version = Version('3')
@@ -51,13 +61,13 @@ class Exporter:
         return Header(version, includes)
 
     def build_program(self):
-        return Program(self.build_header(), self.build_statements())
+        return Program(self.build_header(), self.build_globalstatements())
 
     def build_includes(self):
         # TODO
-        return [Include(filename) for filename in self.includes]
+        return [Include(filename) for filename in self.includeslist]
 
-    def build_statements(self) -> [Statement]:
+    def build_globalstatements(self) -> [Statement]:
         """
         globalStatement
             : subroutineDefinition
@@ -97,16 +107,23 @@ class Exporter:
 
     def build_definitions(self):
         ret = []
-
-        for instruction in self.instruction_in_scope:
-            # ret.append(subroutineDefinition())
-            pass
-
-        for gate in self.gate_in_scope:
-            # ret.append(quantumGateDefinition())
-            pass
-
+        while self._instruction_in_scope:
+            instruction = self._instruction_in_scope.pop(0)
+            ret.append(self.build_subroutinedefinition(instruction))
+        while self._gate_in_scope:
+            gate = self._gate_in_scope.pop(0) # TODO continue from here
+            # ret.append(self.build_quantumgatedefinition(gate))
         return ret
+
+    def build_subroutinedefinition(self, instruction):
+        # TODO this is broken. The signature is of a subroutine is different
+        quantumArgumentList = self.build_indexIdentifierlist(instruction.definition.qubits)
+        subroutineBlock = SubroutineBlock(self.build_quantuminstructions(instruction.definition.data),
+                                          ReturnStatement())
+        return SubroutineDefinition(Identifier(instruction.name), subroutineBlock, quantumArgumentList)
+
+    def build_quantumgatedefinition(self, gate):
+        pass  # TODO (check if standard gate. what to do there?)
 
     def build_bitdeclarations(self):
         ret = []
@@ -119,12 +136,6 @@ class Exporter:
         for qreg in self.quantumcircuit.qregs:
             ret.append(QuantumDeclaration(Identifier(qreg.name), Designator(Integer(qreg.size))))
         return ret
-
-    def _register_gate(self, gate):
-        self.gate_in_scope.append(gate)
-
-    def _register_instruction(self, instruction):
-        self.instruction_in_scope.append(instruction)
 
     def build_quantuminstructions(self, instructions):
         ret = []
@@ -162,7 +173,6 @@ class Exporter:
                                      EqualsOperator(),
                                      Integer(condition[1]))
 
-
     def build_indexIdentifierlist(self, bitlist: [Bit]):
         indexIdentifierList = []
         for bit in bitlist:
@@ -175,7 +185,6 @@ class Exporter:
         expressionList = [Expression(param) for param in instruction[0].params]
 
         return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
-
 
     def build_subroutinecall(self, instruction):
         identifier = Identifier(instruction[0].name)

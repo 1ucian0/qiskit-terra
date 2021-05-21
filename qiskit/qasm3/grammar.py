@@ -309,6 +309,50 @@ class ProgramBlock(Class):
     def qasm(self):
         return ["{\n"] + [stmt.qasm() for stmt in self.statements] + ["}\n"]
 
+class ReturnStatement(Class):  # TODO probably should be a subclass of ControlDirective
+    """
+    returnStatement
+        : 'return' ( expression | quantumMeasurement )? SEMICOLON;
+    """
+    def __init__(self, expression=None):
+        self.expression = expression
+
+    def qasm(self):
+        if self.expression:
+            return [f'return {self.expression.qasm()};\n']
+        return [f'return;\n']
+
+class SubroutineBlock(ProgramBlock):
+    """
+    subroutineBlock
+        : LBRACE statement* returnStatement? RBRACE
+    """
+    def __init__(self, statements: [Statement], returnStatement: ReturnStatement = None):
+        super(SubroutineBlock, self).__init__(statements+[returnStatement])
+
+class SubroutineDefinition(Statement):
+    """
+    subroutineDefinition
+        : 'def' Identifier ( LPAREN classicalArgumentList? RPAREN )? quantumArgumentList?
+        returnSignature? subroutineBlock
+    """
+    def __init__(self,
+                 identifier: Identifier,
+                 subroutineBlock:SubroutineBlock,
+                 quantumArgumentList = None,  # [QuantumArgument]
+                 classicalArgumentList= None  # [ClassicalArgument]
+                 ):
+        self.identifier = identifier
+        self.subroutineBlock = subroutineBlock
+        self.quantumArgumentList = quantumArgumentList or []
+        self.classicalArgumentList = classicalArgumentList or []
+
+    def qasm(self):
+        if self.quantumArgumentList:
+            return [f"def {self.identifier.qasm()} "
+                    f"{', '.join([i.qasm() for i in self.quantumArgumentList])}"] + \
+                   self.subroutineBlock.qasm()
+        return [f"def {self.identifier.qasm()} "] + self.subroutineBlock.qasm()
 
 class BooleanExpression(Class):
     """
