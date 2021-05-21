@@ -38,67 +38,73 @@ class TestCircuitQasm3(QiskitTestCase):
         qc.y(qr1[0]).c_if(cr, 1)
         qc.z(qr1[0]).c_if(cr, 2)
         qc.barrier(qr1, qr2)
-        #         qc.measure(qr1[0], cr[0])
-        #         qc.measure(qr2[0], cr[1])
-        #         qc.measure(qr2[1], cr[2])
-        expected_qasm = [
+        qc.measure(qr1[0], cr[0])
+        qc.measure(qr2[0], cr[1])
+        qc.measure(qr2[1], cr[2])
+        expected_qasm = '\n'.join([
             "OPENQASM 3;",
-            "",
             "bit[3] cr;",
-            "",
             "qubit[1] qr1;",
             "qubit[2] qr2;",
-            "",
             "p(0.3) qr1[0];",
             "u(0.3, 0.2, 0.1) qr2[1];",
             "s qr2[1];",
             "sdg qr2[1];",
             "cx qr1[0], qr2[1];",
-            'barrier qr2[0], qr2[1];',
-            'cx qr2[1], qr1[0];',
-            'h qr2[1];',
-            'x qr2[1];',
-            'y qr1[0];',
-            'z qr1[0];',
-            'barrier qr1[0], qr2[0], qr2[1];'
-        ]
-        self.assertEqual(Exporter(qc).qasm_tree(), expected_qasm)
+            "barrier qr2[0], qr2[1];",
+            "cx qr2[1], qr1[0];",
+            "h qr2[1];",
+            "if (cr == 0){",
+            "x qr2[1];",
+            "}",
+            "if (cr == 1){",
+            "y qr1[0];",
+            "}",
+            "if (cr == 2){",
+            "z qr1[0];",
+            "}",
+            "barrier qr1[0], qr2[0], qr2[1];",
+            "cr[0] = measure qr1[0];",
+            "cr[1] = measure qr2[0];",
+            "cr[2] = measure qr2[1];",
+            ""
+        ])
+        self.assertEqual(Exporter(qc).dump(), expected_qasm)
 
+    def test_circuit_qasm_with_composite_circuit(self):
+        """Test circuit qasm() method when a composite circuit instruction
+        is included within circuit.
+        """
 
-#     def test_circuit_qasm_with_composite_circuit(self):
-#         """Test circuit qasm() method when a composite circuit instruction
-#         is included within circuit.
-#         """
-#
-#         composite_circ_qreg = QuantumRegister(2)
-#         composite_circ = QuantumCircuit(composite_circ_qreg, name="composite_circ")
-#         composite_circ.h(0)
-#         composite_circ.x(1)
-#         composite_circ.cx(0, 1)
-#         composite_circ_instr = composite_circ.to_instruction()
-#
-#         qr = QuantumRegister(2, "qr")
-#         cr = ClassicalRegister(2, "cr")
-#         qc = QuantumCircuit(qr, cr)
-#         qc.h(0)
-#         qc.cx(0, 1)
-#         qc.barrier()
-#         qc.append(composite_circ_instr, [0, 1])
-#         qc.measure([0, 1], [0, 1])
-#
-#         expected_qasm = """OPENQASM 2.0;
-# include "qelib1.inc";
-# gate composite_circ q0,q1 { h q0; x q1; cx q0,q1; }
-# qreg qr[2];
-# creg cr[2];
-# h qr[0];
-# cx qr[0],qr[1];
-# barrier qr[0],qr[1];
-# composite_circ qr[0],qr[1];
-# measure qr[0] -> cr[0];
-# measure qr[1] -> cr[1];\n"""
-#         self.assertEqual(qc.qasm(), expected_qasm)
-#
+        composite_circ_qreg = QuantumRegister(2)
+        composite_circ = QuantumCircuit(composite_circ_qreg, name="composite_circ")
+        composite_circ.h(0)
+        composite_circ.x(1)
+        composite_circ.cx(0, 1)
+        composite_circ_instr = composite_circ.to_instruction()
+
+        qr = QuantumRegister(2, "qr")
+        cr = ClassicalRegister(2, "cr")
+        qc = QuantumCircuit(qr, cr)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.barrier()
+        qc.append(composite_circ_instr, [0, 1])
+        qc.measure([0, 1], [0, 1])
+
+        expected_qasm = """OPENQASM 2.0;
+include "qelib1.inc";
+gate composite_circ q0,q1 { h q0; x q1; cx q0,q1; }
+qreg qr[2];
+creg cr[2];
+h qr[0];
+cx qr[0],qr[1];
+barrier qr[0],qr[1];
+composite_circ qr[0],qr[1];
+measure qr[0] -> cr[0];
+measure qr[1] -> cr[1];\n"""
+        self.assertEqual(Exporter(qc).dump(), expected_qasm)
+
 #     def test_circuit_qasm_with_multiple_same_composite_circuits(self):
 #         """Test circuit qasm() method when a composite circuit is added
 #         to the circuit multiple times

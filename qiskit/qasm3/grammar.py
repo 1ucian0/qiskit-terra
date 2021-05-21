@@ -139,16 +139,19 @@ class IndexIdentifier2(IndexIdentifier):
     def qasm(self):
         return f"{self.identifier.qasm()}[{', '.join([i.qasm() for i in self.expressionList])}]"
 
+
 class QuantumMeasurement(Class):
     """
     quantumMeasurement
         : 'measure' indexIdentifierList
     """
+
     def __init__(self, indexIdentifierList: [Identifier]):
         self.indexIdentifierList = indexIdentifierList
 
     def qasm(self):
         return f"measure {', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
+
 
 class QuantumMeasurementAssignment(Statement):
     """
@@ -156,15 +159,18 @@ class QuantumMeasurementAssignment(Statement):
         : quantumMeasurement ( ARROW indexIdentifierList)?
         | indexIdentifierList EQUALS quantumMeasurement  # eg: bits = measure qubits;
     """
+
     def __init__(self,
                  indexIdentifierList: [Identifier],
-        quantumMeasurement: QuantumMeasurement):
-
+                 quantumMeasurement: QuantumMeasurement):
         self.indexIdentifierList = indexIdentifierList
         self.quantumMeasurement = quantumMeasurement
 
     def qasm(self):
         return [f"{self.indexIdentifierList[0].qasm()} = {self.quantumMeasurement.qasm()}"]
+
+class ExpressionTerminator(Expression):
+    pass
 
 class Integer(Expression):
     pass
@@ -218,11 +224,11 @@ class QuantumGateCall(QuantumInstruction):
     """
 
     def __init__(
-        self,
-        quantumGateName: Identifier,
-        indexIdentifierList: [Identifier],
-        expressionList=[Expression],
-        quantumGateModifier=None,
+            self,
+            quantumGateName: Identifier,
+            indexIdentifierList: [Identifier],
+            expressionList=[Expression],
+            quantumGateModifier=None,
     ):
         self.quantumGateName = quantumGateName
         self.indexIdentifierList = indexIdentifierList
@@ -243,6 +249,36 @@ class QuantumGateCall(QuantumInstruction):
         )
 
 
+class SubroutineCall(ExpressionTerminator):
+    """
+    subroutineCall
+        : Identifier ( LPAREN expressionList? RPAREN )? indexIdentifierList
+    """
+
+    def __init__(
+            self,
+            identifier: Identifier,
+            indexIdentifierList: [Identifier],
+            expressionList:[Expression] = None
+    ):
+        self.identifier = identifier
+        self.indexIdentifierList = indexIdentifierList
+        self.expressionList = expressionList or []
+
+    def qasm(self):
+        if self.expressionList:
+            return (
+                f"{self.identifier.qasm()} "
+                f"({', '.join([e.qasm() for e in self.expressionList])}) "
+                f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
+            )
+
+        return (
+            f"{self.identifier.qasm()} "
+            f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
+        )
+
+
 class QuantumBarrier(QuantumInstruction):
     """
     quantumBarrier
@@ -253,7 +289,7 @@ class QuantumBarrier(QuantumInstruction):
         self.indexIdentifierList = indexIdentifierList
 
     def qasm(self):
-        return [f'barrier {", ".join([i.qasm() for i in self.indexIdentifierList])};']
+        return [f'barrier {", ".join([i.qasm() for i in self.indexIdentifierList])};\n']
 
 
 class BooleanExpression(Class):
@@ -266,6 +302,7 @@ class ProgramBlock(Class):
         : statement | controlDirective
         | LBRACE(statement | controlDirective) * RBRACE
     """
+
     def __init__(self, statements: [Statement]):
         self.statements = statements
 
@@ -310,7 +347,7 @@ class ComparisonExpression(BooleanExpression):
     """
 
     def __init__(
-        self, left: Expression, relation: RelationalOperator = None, right: Expression = None
+            self, left: Expression, relation: RelationalOperator = None, right: Expression = None
     ):
         self.left = left
         self.relation = relation
@@ -319,6 +356,7 @@ class ComparisonExpression(BooleanExpression):
     def qasm(self):
         return f"{self.left.qasm()} {self.relation.qasm()} {self.right.qasm()}"
 
+
 class BranchingStatement(Statement):
     """
     branchingStatement
@@ -326,7 +364,7 @@ class BranchingStatement(Statement):
     """
 
     def __init__(
-        self, booleanExpression: BooleanExpression, programTrue: ProgramBlock, programFalse=None
+            self, booleanExpression: BooleanExpression, programTrue: ProgramBlock, programFalse=None
     ):
         self.booleanExpression = booleanExpression
         self.programTrue = programTrue
@@ -338,4 +376,3 @@ class BranchingStatement(Statement):
         if self.programFalse:
             ret += ['else'] + self.programFalse.qasm()
         return ret
-

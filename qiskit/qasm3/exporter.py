@@ -14,6 +14,7 @@ from .grammar import *
 from qiskit.circuit import Gate, Barrier, Measure
 from qiskit.circuit.bit import Bit
 
+
 class Exporter:
     def __init__(
         self,
@@ -21,7 +22,9 @@ class Exporter:
         includes=None,  # list[filename:str]
     ):
         self.quantumcircuit = quantumcircuit
-        self.includes = includes or self.requiered_includes()
+        self.includes = includes or []
+        self.instruction_in_scope = []
+        self.gate_in_scope = []
 
     def requiered_includes(self):
         return []  # TODO
@@ -44,11 +47,15 @@ class Exporter:
 
     def build_header(self):
         version = Version('3')
-        includes = [Include(filename) for filename in self.includes]
+        includes = self.build_includes()
         return Header(version, includes)
 
     def build_program(self):
         return Program(self.build_header(), self.build_statements())
+
+    def build_includes(self):
+        # TODO
+        return [Include(filename) for filename in self.includes]
 
     def build_statements(self) -> [Statement]:
         """
@@ -75,13 +82,30 @@ class Exporter:
         bitdeclarations = self.build_bitdeclarations()
         quantumdeclarations = self.build_quantumdeclarations()
         quantuminstructions = self.build_quantuminstructions(self.quantumcircuit.data)
+        defintions = self.build_definitions()
+
         ret = []
+        if defintions:
+            ret += defintions
         if bitdeclarations:
             ret += bitdeclarations
         if quantumdeclarations:
             ret += quantumdeclarations
         if quantuminstructions:
             ret += quantuminstructions
+        return ret
+
+    def build_definitions(self):
+        ret = []
+
+        for instruction in self.instruction_in_scope:
+            # ret.append(subroutineDefinition())
+            pass
+
+        for gate in self.gate_in_scope:
+            # ret.append(quantumGateDefinition())
+            pass
+
         return ret
 
     def build_bitdeclarations(self):
@@ -96,10 +120,17 @@ class Exporter:
             ret.append(QuantumDeclaration(Identifier(qreg.name), Designator(Integer(qreg.size))))
         return ret
 
+    def _register_gate(self, gate):
+        self.gate_in_scope.append(gate)
+
+    def _register_instruction(self, instruction):
+        self.instruction_in_scope.append(instruction)
+
     def build_quantuminstructions(self, instructions):
         ret = []
         for instruction in instructions:
             if isinstance(instruction[0], Gate):
+                self._register_gate(instruction[0])
                 if instruction[0].condition:
                     eqcondition = self.build_eqcondition(instruction[0].condition)
                     instruciton_without_condition = instruction[0].copy()
@@ -118,7 +149,8 @@ class Exporter:
                 indexIdentifierList = self.build_indexIdentifierlist(instruction[2])
                 ret.append(QuantumMeasurementAssignment(indexIdentifierList, quantumMeasurement))
             else:
-                raise NotImplementedError(f'{instruction[0]} is not implemented in the QASM3 exporter')
+                self._register_instruction(instruction[0])
+                ret.append(self.build_subroutinecall(instruction))
         return ret
 
     def build_programblock(self, instructions):
@@ -143,6 +175,14 @@ class Exporter:
         expressionList = [Expression(param) for param in instruction[0].params]
 
         return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
+
+
+    def build_subroutinecall(self, instruction):
+        identifier = Identifier(instruction[0].name)
+        expressionList = [Expression(param) for param in instruction[0].params]
+        indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
+
+        return SubroutineCall(identifier, indexIdentifierList, expressionList)
 
     def build_indexidentifier(self, bit: Bit):
         return IndexIdentifier2(Identifier(bit.register.name), [Integer(bit.index)])
