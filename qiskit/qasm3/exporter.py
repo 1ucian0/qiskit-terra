@@ -157,7 +157,7 @@ class Qasm3Builder:
                 ret.append(QuantumBarrier(indexIdentifierList))
             elif isinstance(instruction[0], Measure):
                 quantumMeasurement = QuantumMeasurement(self.build_indexIdentifierlist(instruction[1]))
-                indexIdentifierList = self.build_indexIdentifierlist(instruction[2])
+                indexIdentifierList = self.build_indexidentifier(instruction[2][0])
                 ret.append(QuantumMeasurementAssignment(indexIdentifierList, quantumMeasurement))
             else:
                 self._register_instruction(instruction[0])

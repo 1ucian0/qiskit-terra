@@ -156,18 +156,18 @@ class QuantumMeasurement(Class):
 class QuantumMeasurementAssignment(Statement):
     """
     quantumMeasurementAssignment
-        : quantumMeasurement ( ARROW indexIdentifierList)?
-        | indexIdentifierList EQUALS quantumMeasurement  # eg: bits = measure qubits;
+        : quantumMeasurement ARROW indexIdentifierList
+        | indexIdentifier EQUALS quantumMeasurement  # eg: bits = measure qubits;
     """
 
     def __init__(self,
-                 indexIdentifierList: [Identifier],
+                 indexIdentifier: IndexIdentifier2,
                  quantumMeasurement: QuantumMeasurement):
-        self.indexIdentifierList = indexIdentifierList
+        self.indexIdentifier = indexIdentifier
         self.quantumMeasurement = quantumMeasurement
 
     def qasm(self):
-        return [f"{self.indexIdentifierList[0].qasm()} = {self.quantumMeasurement.qasm()}"]
+        return [f"{self.indexIdentifier.qasm()} = {self.quantumMeasurement.qasm()}"]
 
 class ExpressionTerminator(Expression):
     pass
