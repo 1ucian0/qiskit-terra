@@ -92,17 +92,23 @@ class TestCircuitQasm3(QiskitTestCase):
         qc.append(composite_circ_instr, [0, 1])
         qc.measure([0, 1], [0, 1])
 
-        expected_qasm = """OPENQASM 2.0;
-include "qelib1.inc";
-gate composite_circ q0,q1 { h q0; x q1; cx q0,q1; }
-qreg qr[2];
-creg cr[2];
-h qr[0];
-cx qr[0],qr[1];
-barrier qr[0],qr[1];
-composite_circ qr[0],qr[1];
-measure qr[0] -> cr[0];
-measure qr[1] -> cr[1];\n"""
+        expected_qasm = '\n'.join(["OPENQASM 3;",
+                                   "def composite_circ qubit[2] q {",
+                                   "h q[0];",
+                                   "x q[1];",
+                                   "cx q[0], q[1];",
+                                   "return;",
+                                   "}",
+                                   "bit[2] cr;",
+                                   "qubit[2] qr;",
+                                   "h qr[0];",
+                                   "cx qr[0], qr[1];",
+                                   "barrier qr[0], qr[1];",
+                                   "composite_circ qr[0], qr[1];",
+                                   "cr[0] = measure qr[0];",
+                                   "cr[1] = measure qr[1];",
+                                   ""
+                                   ])
         self.assertEqual(Exporter(qc).dump(), expected_qasm)
 
 #     def test_circuit_qasm_with_multiple_same_composite_circuits(self):
