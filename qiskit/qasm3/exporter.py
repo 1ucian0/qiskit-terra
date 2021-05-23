@@ -11,7 +11,7 @@
 # that they have been altered from the originals.
 
 from .grammar import *
-from qiskit.circuit import Gate, Barrier, Measure
+from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister
 from qiskit.circuit.bit import Bit
 
 
@@ -117,7 +117,7 @@ class Qasm3Builder:
 
     def build_subroutinedefinition(self, instruction):
         # TODO this is broken. The signature is of a subroutine is different
-        quantumArgumentList = self.build_indexIdentifierlist(instruction.definition.qubits)
+        quantumArgumentList = self.build_quantumArgumentList(instruction.definition.qregs)
         subroutineBlock = SubroutineBlock(self.build_quantuminstructions(instruction.definition.data),
                                           ReturnStatement())
         return SubroutineDefinition(Identifier(instruction.name), subroutineBlock, quantumArgumentList)
@@ -172,6 +172,13 @@ class Qasm3Builder:
         return ComparisonExpression(Identifier(condition[0].name),
                                      EqualsOperator(),
                                      Integer(condition[1]))
+
+    def build_quantumArgumentList(self, qregs: [QuantumRegister]):
+        quantumArgumentList = []
+        for qreg in qregs:
+            quantumArgumentList.append(QuantumArgument(Identifier(qreg.name),
+                                                          Designator(Integer(qreg.size))))
+        return quantumArgumentList
 
     def build_indexIdentifierlist(self, bitlist: [Bit]):
         indexIdentifierList = []

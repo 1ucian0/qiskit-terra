@@ -160,17 +160,17 @@ class QuantumMeasurementAssignment(Statement):
         | indexIdentifier EQUALS quantumMeasurement  # eg: bits = measure qubits;
     """
 
-    def __init__(self,
-                 indexIdentifier: IndexIdentifier2,
-                 quantumMeasurement: QuantumMeasurement):
+    def __init__(self, indexIdentifier: IndexIdentifier2, quantumMeasurement: QuantumMeasurement):
         self.indexIdentifier = indexIdentifier
         self.quantumMeasurement = quantumMeasurement
 
     def qasm(self):
         return [f"{self.indexIdentifier.qasm()} = {self.quantumMeasurement.qasm()}"]
 
+
 class ExpressionTerminator(Expression):
     pass
+
 
 class Integer(Expression):
     pass
@@ -224,11 +224,11 @@ class QuantumGateCall(QuantumInstruction):
     """
 
     def __init__(
-            self,
-            quantumGateName: Identifier,
-            indexIdentifierList: [Identifier],
-            expressionList=[Expression],
-            quantumGateModifier=None,
+        self,
+        quantumGateName: Identifier,
+        indexIdentifierList: [Identifier],
+        expressionList=[Expression],
+        quantumGateModifier=None,
     ):
         self.quantumGateName = quantumGateName
         self.indexIdentifierList = indexIdentifierList
@@ -256,10 +256,10 @@ class SubroutineCall(ExpressionTerminator):
     """
 
     def __init__(
-            self,
-            identifier: Identifier,
-            indexIdentifierList: [Identifier],
-            expressionList:[Expression] = None
+        self,
+        identifier: Identifier,
+        indexIdentifierList: [Identifier],
+        expressionList: [Expression] = None,
     ):
         self.identifier = identifier
         self.indexIdentifierList = indexIdentifierList
@@ -309,26 +309,40 @@ class ProgramBlock(Class):
     def qasm(self):
         return ["{\n"] + [stmt.qasm() for stmt in self.statements] + ["}\n"]
 
+
 class ReturnStatement(Class):  # TODO probably should be a subclass of ControlDirective
     """
     returnStatement
         : 'return' ( expression | quantumMeasurement )? SEMICOLON;
     """
+
     def __init__(self, expression=None):
         self.expression = expression
 
     def qasm(self):
         if self.expression:
-            return [f'return {self.expression.qasm()};\n']
-        return [f'return;\n']
+            return [f"return {self.expression.qasm()};\n"]
+        return [f"return;\n"]
+
 
 class SubroutineBlock(ProgramBlock):
     """
     subroutineBlock
         : LBRACE statement* returnStatement? RBRACE
     """
+
     def __init__(self, statements: [Statement], returnStatement: ReturnStatement = None):
-        super(SubroutineBlock, self).__init__(statements+[returnStatement])
+        super(SubroutineBlock, self).__init__(statements + [returnStatement])
+
+
+class QuantumArgument(QuantumDeclaration):
+    """
+    quantumArgument
+        : 'qreg' Identifier designator? | 'qubit' designator? Identifier
+    """
+    def qasm(self):
+        return f"qubit{self.designator.qasm()} {self.identifier.qasm()}"
+
 
 class SubroutineDefinition(Statement):
     """
@@ -336,12 +350,14 @@ class SubroutineDefinition(Statement):
         : 'def' Identifier ( LPAREN classicalArgumentList? RPAREN )? quantumArgumentList?
         returnSignature? subroutineBlock
     """
-    def __init__(self,
-                 identifier: Identifier,
-                 subroutineBlock:SubroutineBlock,
-                 quantumArgumentList = None,  # [QuantumArgument]
-                 classicalArgumentList= None  # [ClassicalArgument]
-                 ):
+
+    def __init__(
+        self,
+        identifier: Identifier,
+        subroutineBlock: SubroutineBlock,
+        quantumArgumentList: [QuantumArgument] = None,
+        classicalArgumentList=None,  # [ClassicalArgument]
+    ):
         self.identifier = identifier
         self.subroutineBlock = subroutineBlock
         self.quantumArgumentList = quantumArgumentList or []
@@ -349,10 +365,12 @@ class SubroutineDefinition(Statement):
 
     def qasm(self):
         if self.quantumArgumentList:
-            return [f"def {self.identifier.qasm()} "
-                    f"{', '.join([i.qasm() for i in self.quantumArgumentList])}"] + \
-                   self.subroutineBlock.qasm()
+            return [
+                f"def {self.identifier.qasm()} "
+                f"{', '.join([i.qasm() for i in self.quantumArgumentList])} "
+            ] + self.subroutineBlock.qasm()
         return [f"def {self.identifier.qasm()} "] + self.subroutineBlock.qasm()
+
 
 class BooleanExpression(Class):
     """
@@ -391,7 +409,7 @@ class ComparisonExpression(BooleanExpression):
     """
 
     def __init__(
-            self, left: Expression, relation: RelationalOperator = None, right: Expression = None
+        self, left: Expression, relation: RelationalOperator = None, right: Expression = None
     ):
         self.left = left
         self.relation = relation
@@ -408,7 +426,7 @@ class BranchingStatement(Statement):
     """
 
     def __init__(
-            self, booleanExpression: BooleanExpression, programTrue: ProgramBlock, programFalse=None
+        self, booleanExpression: BooleanExpression, programTrue: ProgramBlock, programFalse=None
     ):
         self.booleanExpression = booleanExpression
         self.programTrue = programTrue
@@ -418,5 +436,5 @@ class BranchingStatement(Statement):
         ret = [f"if ({self.booleanExpression.qasm()})"] + self.programTrue.qasm()
 
         if self.programFalse:
-            ret += ['else'] + self.programFalse.qasm()
+            ret += ["else"] + self.programFalse.qasm()
         return ret
