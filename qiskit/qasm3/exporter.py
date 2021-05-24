@@ -46,14 +46,14 @@ class Qasm3Builder:
     def __init__(self, quantumcircuit, includeslist):
         self.quantumcircuit = quantumcircuit
         self.includeslist = includeslist
-        self._instruction_in_scope = []
+        self._instruction_in_scope = {}
         self._gate_in_scope = []
 
     def _register_gate(self, gate):
         self._gate_in_scope.append(gate)
 
     def _register_instruction(self, instruction):
-        self._instruction_in_scope.append(instruction)
+        self._instruction_in_scope[instruction.name] = instruction
 
     def build_header(self):
         version = Version('3')
@@ -108,7 +108,8 @@ class Qasm3Builder:
     def build_definitions(self):
         ret = []
         while self._instruction_in_scope:
-            instruction = self._instruction_in_scope.pop(0)
+            instruction_name = next(iter(self._instruction_in_scope.keys()))
+            instruction = self._instruction_in_scope.pop(instruction_name)
             ret.append(self.build_subroutinedefinition(instruction))
         while self._gate_in_scope:
             gate = self._gate_in_scope.pop(0) # TODO continue from here
@@ -116,7 +117,6 @@ class Qasm3Builder:
         return ret
 
     def build_subroutinedefinition(self, instruction):
-        # TODO this is broken. The signature is of a subroutine is different
         quantumArgumentList = self.build_quantumArgumentList(instruction.definition.qregs)
         subroutineBlock = SubroutineBlock(self.build_quantuminstructions(instruction.definition.data),
                                           ReturnStatement())
