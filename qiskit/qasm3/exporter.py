@@ -48,6 +48,7 @@ class Qasm3Builder:
         self.includeslist = includeslist
         self._instruction_in_scope = {}
         self._gate_in_scope = []
+        self._flat_reg = False
 
     def _register_gate(self, gate):
         self._gate_in_scope.append(gate)
@@ -110,7 +111,9 @@ class Qasm3Builder:
         while self._instruction_in_scope:
             instruction_name = next(iter(self._instruction_in_scope.keys()))
             instruction = self._instruction_in_scope.pop(instruction_name)
+            self._flat_reg = True
             ret.append(self.build_subroutinedefinition(instruction))
+            self._flat_reg = False
         while self._gate_in_scope:
             gate = self._gate_in_scope.pop(0) # TODO continue from here
             # ret.append(self.build_quantumgatedefinition(gate))
@@ -118,8 +121,8 @@ class Qasm3Builder:
 
     def build_subroutinedefinition(self, instruction):
         quantumArgumentList = self.build_quantumArgumentList(instruction.definition.qregs)
-        subroutineBlock = SubroutineBlock(self.build_quantuminstructions(instruction.definition.data),
-                                          ReturnStatement())
+        subroutineBlock = SubroutineBlock(self.build_quantuminstructions(
+            instruction.definition.data), ReturnStatement())
         return SubroutineDefinition(Identifier(instruction.name), subroutineBlock, quantumArgumentList)
 
     def build_quantumgatedefinition(self, gate):
@@ -176,8 +179,13 @@ class Qasm3Builder:
     def build_quantumArgumentList(self, qregs: [QuantumRegister]):
         quantumArgumentList = []
         for qreg in qregs:
-            quantumArgumentList.append(QuantumArgument(Identifier(qreg.name),
-                                                          Designator(Integer(qreg.size))))
+            if self._flat_reg:
+                for qubit in qreg:
+                    qubit_name = f"{qreg.name}_{qubit.index}"
+                    quantumArgumentList.append(QuantumArgument(Identifier(qubit_name)))
+            else:
+                quantumArgumentList.append(QuantumArgument(Identifier(qreg.name),
+                                                              Designator(Integer(qreg.size))))
         return quantumArgumentList
 
     def build_indexIdentifierlist(self, bitlist: [Bit]):
@@ -201,4 +209,8 @@ class Qasm3Builder:
         return SubroutineCall(identifier, indexIdentifierList, expressionList)
 
     def build_indexidentifier(self, bit: Bit):
-        return IndexIdentifier2(Identifier(bit.register.name), [Integer(bit.index)])
+        if self._flat_reg:
+            bit_name = f"{bit.register.name}_{bit.index}"
+            return IndexIdentifier2(Identifier(bit_name))
+        else:
+            return IndexIdentifier2(Identifier(bit.register.name), [Integer(bit.index)])

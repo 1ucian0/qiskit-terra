@@ -132,13 +132,15 @@ class IndexIdentifier2(IndexIdentifier):
         | indexIdentifier '||' indexIdentifier
     """
 
-    def __init__(self, identifier: Identifier, expressionList: [Expression]):
+    def __init__(self, identifier: Identifier, expressionList: [Expression] = None):
         self.identifier = identifier
         self.expressionList = expressionList
 
     def qasm(self):
-        return f"{self.identifier.qasm()}[{', '.join([i.qasm() for i in self.expressionList])}]"
-
+        if self.expressionList:
+            return f"{self.identifier.qasm()}[{', '.join([i.qasm() for i in self.expressionList])}]"
+        else:
+            return f"{self.identifier.qasm()}"
 
 class QuantumMeasurement(Class):
     """
@@ -341,8 +343,10 @@ class QuantumArgument(QuantumDeclaration):
         : 'qreg' Identifier designator? | 'qubit' designator? Identifier
     """
     def qasm(self):
-        return f"qubit{self.designator.qasm()} {self.identifier.qasm()}"
-
+        if self.designator:
+            return f"qubit{self.designator.qasm()} {self.identifier.qasm()}"
+        else:
+            return f"qubit {self.identifier.qasm()}"
 
 class SubroutineDefinition(Statement):
     """
