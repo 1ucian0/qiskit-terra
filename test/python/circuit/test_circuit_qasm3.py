@@ -93,10 +93,10 @@ class TestCircuitQasm3(QiskitTestCase):
         qc.measure([0, 1], [0, 1])
 
         expected_qasm = '\n'.join(["OPENQASM 3;",
-                                   "def composite_circ qubit[2] q {",
-                                   "h q[0];",
-                                   "x q[1];",
-                                   "cx q[0], q[1];",
+                                   "def composite_circ qubit q_0, qubit q_1 {",
+                                   "h q_0;",
+                                   "x q_1;",
+                                   "cx q_0, q_1;",
                                    "return;",
                                    "}",
                                    "bit[2] cr;",
@@ -134,10 +134,10 @@ class TestCircuitQasm3(QiskitTestCase):
         qc.measure([0, 1], [0, 1])
 
         expected_qasm = '\n'.join(["OPENQASM 3;",
-                                   "def composite_circ qubit[2] q {",
-                                   "h q[0];",
-                                   "x q[1];",
-                                   "cx q[0], q[1];",
+                                   "def composite_circ qubit q_0, qubit q_1 {",
+                                   "h q_0;",
+                                   "x q_1;",
+                                   "cx q_0, q_1;",
                                    "return;",
                                    "}",
                                    "bit[2] cr;",
