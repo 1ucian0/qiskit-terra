@@ -43,18 +43,24 @@ class Exporter:
         return Qasm3Builder(self.quantumcircuit, self.includes).build_program().qasm()
 
 class Qasm3Builder:
+    builtins = (Barrier, Measure)
+
     def __init__(self, quantumcircuit, includeslist):
         self.quantumcircuit = quantumcircuit
         self.includeslist = includeslist
-        self._instruction_in_scope = {}
         self._gate_in_scope = []
+        self._subroutine_in_scope = {}
+        self._kernel_in_scope = {}
         self._flat_reg = False
 
     def _register_gate(self, gate):
         self._gate_in_scope.append(gate)
 
-    def _register_instruction(self, instruction):
-        self._instruction_in_scope[instruction.name] = instruction
+    def _register_subroutine(self, instruction):
+        self._subroutine_in_scope[id(instruction)] = instruction
+
+    def _register_kernel(self, instruction):
+        self._kernel_in_scope[instruction.name] = instruction
 
     def build_header(self):
         version = Version('3')
@@ -62,7 +68,19 @@ class Qasm3Builder:
         return Header(version, includes)
 
     def build_program(self):
+        self.hoist_subroutines_and_gates(self.quantumcircuit.data)
         return Program(self.build_header(), self.build_globalstatements())
+
+    def hoist_subroutines_and_gates(self, instructions):
+        for instruction in instructions:
+            if isinstance(instruction[0], Gate):
+                self._register_gate(instruction[0])
+            else:
+                self._register_subroutine(instruction[0])
+            if instruction[0].definition:
+                self.hoist_subroutines_and_gates(instruction[0].definition.data)
+            else:
+                self._register_kernel(instruction[0])
 
     def build_includes(self):
         # TODO
@@ -90,14 +108,14 @@ class Qasm3Builder:
             | quantumStatement  # build_quantuminstruction
             ;
         """
+        definitions = self.build_definitions()
         bitdeclarations = self.build_bitdeclarations()
         quantumdeclarations = self.build_quantumdeclarations()
         quantuminstructions = self.build_quantuminstructions(self.quantumcircuit.data)
-        defintions = self.build_definitions()
 
         ret = []
-        if defintions:
-            ret += defintions
+        if definitions:
+            ret += definitions
         if bitdeclarations:
             ret += bitdeclarations
         if quantumdeclarations:
@@ -108,22 +126,30 @@ class Qasm3Builder:
 
     def build_definitions(self):
         ret = []
-        while self._instruction_in_scope:
-            instruction_name = next(iter(self._instruction_in_scope.keys()))
-            instruction = self._instruction_in_scope.pop(instruction_name)
+        for instruction in self._subroutine_in_scope.values():
+            if isinstance(instruction, self.builtins):
+                continue
+            same_names = [i for i in self._subroutine_in_scope.values()
+                               if i.name == instruction.name ]
+            if len(same_names) > 1:
+                subroutine_name = f"{instruction.name}_{id(instruction)}"
+            else:
+                subroutine_name = instruction.name
             self._flat_reg = True
-            ret.append(self.build_subroutinedefinition(instruction))
+            ret.append(self.build_subroutinedefinition(instruction, subroutine_name))
             self._flat_reg = False
         while self._gate_in_scope:
             gate = self._gate_in_scope.pop(0) # TODO continue from here
             # ret.append(self.build_quantumgatedefinition(gate))
         return ret
 
-    def build_subroutinedefinition(self, instruction):
+    def build_subroutinedefinition(self, instruction, name=None):
+        if name is None:
+            name = instruction.name
         quantumArgumentList = self.build_quantumArgumentList(instruction.definition.qregs)
         subroutineBlock = SubroutineBlock(self.build_quantuminstructions(
             instruction.definition.data), ReturnStatement())
-        return SubroutineDefinition(Identifier(instruction.name), subroutineBlock, quantumArgumentList)
+        return SubroutineDefinition(Identifier(name), subroutineBlock, quantumArgumentList)
 
     def build_quantumgatedefinition(self, gate):
         pass  # TODO (check if standard gate. what to do there?)
@@ -144,7 +170,6 @@ class Qasm3Builder:
         ret = []
         for instruction in instructions:
             if isinstance(instruction[0], Gate):
-                self._register_gate(instruction[0])
                 if instruction[0].condition:
                     eqcondition = self.build_eqcondition(instruction[0].condition)
                     instruciton_without_condition = instruction[0].copy()
@@ -163,7 +188,6 @@ class Qasm3Builder:
                 indexIdentifierList = self.build_indexidentifier(instruction[2][0])
                 ret.append(QuantumMeasurementAssignment(indexIdentifierList, quantumMeasurement))
             else:
-                self._register_instruction(instruction[0])
                 ret.append(self.build_subroutinecall(instruction))
         return ret
 
