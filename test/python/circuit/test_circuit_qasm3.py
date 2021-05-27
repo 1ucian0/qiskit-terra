@@ -173,25 +173,32 @@ class TestCircuitQasm3(QiskitTestCase):
         qr = QuantumRegister(1, name="qr")
         circuit = QuantumCircuit(qr, name="circuit")
         circuit.append(my_gate_inst1, [qr[0]])
+        my_gate_inst1_id = id(circuit.data[-1][0])
         circuit.append(my_gate_inst2, [qr[0]])
         my_gate_inst2_id = id(circuit.data[-1][0])
         circuit.append(my_gate_inst3, [qr[0]])
         my_gate_inst3_id = id(circuit.data[-1][0])
+        expected_qasm = '\n'.join(["OPENQASM 3;",
+                                   f"def my_gate_{my_gate_inst1_id} qubit q_0 {{",
+                                   "h q_0;",
+                                   "return;",
+                                   "}",
+                                   f"def my_gate_{my_gate_inst2_id} qubit q_0 {{",
+                                   "x q_0;",
+                                   "return;",
+                                   "}",
+                                   f"def my_gate_{my_gate_inst3_id} qubit q_0 {{",
+                                   "x q_0;",
+                                   "return;",
+                                   "}",
+                                   "qubit[1] qr;",
+                                   "my_gate qr[0];",
+                                   "my_gate qr[0];",
+                                   "my_gate qr[0];",
+                                   "", ])
 
-#         expected_qasm = """OPENQASM 2.0;
-# include "qelib1.inc";
-# gate my_gate_{0} q0 {{ x q0; }}
-# gate my_gate_{1} q0 {{ x q0; }}
-# gate my_gate q0 {{ h q0; }}
-# qreg qr[1];
-# my_gate qr[0];
-# my_gate_{1} qr[0];
-# my_gate_{0} qr[0];\n""".format(
-#             my_gate_inst3_id, my_gate_inst2_id
-#         )
-#         self.assertEqual(circuit.qasm(), expected_qasm)
-#         self.assertEqual(Exporter(circuit).dump(), expected_qasm)
-        print(Exporter(circuit).dump())
+        self.assertEqual(Exporter(circuit).dump(), expected_qasm)
+
 #
 #     def test_circuit_qasm_pi(self):
 #         """Test circuit qasm() method with pi params."""

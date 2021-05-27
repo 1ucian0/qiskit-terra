@@ -138,6 +138,7 @@ class Qasm3Builder:
             self._flat_reg = True
             ret.append(self.build_subroutinedefinition(instruction, subroutine_name))
             self._flat_reg = False
+
         while self._gate_in_scope:
             gate = self._gate_in_scope.pop(0) # TODO continue from here
             # ret.append(self.build_quantumgatedefinition(gate))
