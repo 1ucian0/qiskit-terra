@@ -327,6 +327,14 @@ class ReturnStatement(Class):  # TODO probably should be a subclass of ControlDi
         return [f"return;\n"]
 
 
+class QuantumBlock(ProgramBlock):
+    """
+    quantumBlock
+        : LBRACE ( quantumStatement | quantumLoop )* RBRACE
+    """
+    pass
+
+
 class SubroutineBlock(ProgramBlock):
     """
     subroutineBlock
@@ -347,6 +355,33 @@ class QuantumArgument(QuantumDeclaration):
             return f"qubit{self.designator.qasm()} {self.identifier.qasm()}"
         else:
             return f"qubit {self.identifier.qasm()}"
+
+class QuantumGateSignature(Class):
+    """
+    quantumGateSignature
+        : quantumGateName ( LPAREN identifierList? RPAREN )? identifierList
+    """
+    def __init__(self, quantumGateName: Identifier, identifierList: [Identifier]):
+        self.quantumGateName = quantumGateName
+        self.identifierList = identifierList or []
+
+    def qasm(self):
+        return f"{self.quantumGateName.qasm()} {', '.join([i.qasm() for i in self.identifierList])}"
+
+class QuantumGateDefinition(Statement):
+    """
+    quantumGateDefinition
+        : 'gate' quantumGateSignature quantumBlock
+    """
+    def __init__(self,
+                 quantumGateSignature: QuantumGateSignature,
+                 quantumBlock: QuantumBlock):
+        self.quantumGateSignature = quantumGateSignature
+        self.quantumBlock = quantumBlock
+
+    def qasm(self):
+        return [f"gate {self.quantumGateSignature.qasm()} "] + self.quantumBlock.qasm()
+
 
 class SubroutineDefinition(Statement):
     """

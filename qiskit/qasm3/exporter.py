@@ -48,13 +48,13 @@ class Qasm3Builder:
     def __init__(self, quantumcircuit, includeslist):
         self.quantumcircuit = quantumcircuit
         self.includeslist = includeslist
-        self._gate_in_scope = []
+        self._gate_in_scope = {}
         self._subroutine_in_scope = {}
         self._kernel_in_scope = {}
         self._flat_reg = False
 
     def _register_gate(self, gate):
-        self._gate_in_scope.append(gate)
+        self._gate_in_scope[id(gate)] = gate
 
     def _register_subroutine(self, instruction):
         self._subroutine_in_scope[id(instruction)] = instruction
@@ -73,14 +73,14 @@ class Qasm3Builder:
 
     def hoist_subroutines_and_gates(self, instructions):
         for instruction in instructions:
-            if isinstance(instruction[0], Gate):
-                self._register_gate(instruction[0])
-            else:
-                self._register_subroutine(instruction[0])
-            if instruction[0].definition:
-                self.hoist_subroutines_and_gates(instruction[0].definition.data)
-            else:
+            if instruction[0].definition is None:
                 self._register_kernel(instruction[0])
+            else:
+                if isinstance(instruction[0], Gate):
+                    self._register_gate(instruction[0])
+                else:
+                    self._register_subroutine(instruction[0])
+                self.hoist_subroutines_and_gates(instruction[0].definition.data)
 
     def build_includes(self):
         # TODO
@@ -129,20 +129,25 @@ class Qasm3Builder:
         for instruction in self._subroutine_in_scope.values():
             if isinstance(instruction, self.builtins):
                 continue
-            same_names = [i for i in self._subroutine_in_scope.values()
-                               if i.name == instruction.name ]
-            if len(same_names) > 1:
-                subroutine_name = f"{instruction.name}_{id(instruction)}"
-            else:
-                subroutine_name = instruction.name
-            self._flat_reg = True
-            ret.append(self.build_subroutinedefinition(instruction, subroutine_name))
-            self._flat_reg = False
-
-        while self._gate_in_scope:
-            gate = self._gate_in_scope.pop(0) # TODO continue from here
-            # ret.append(self.build_quantumgatedefinition(gate))
+            ret.append(self.build_definition(instruction, self.build_subroutinedefinition))
+        for instruction in self._gate_in_scope.values():
+            # TODO if gate in standard library, this should be dynamic and similar to self.builtins
+            if instruction.name in ['U', 'h', 'u1', 'u2', 'u3', 'x', 'p', 's', 'sdg', 'y', 'z']:
+                continue
+            ret.append(self.build_definition(instruction, self.build_quantumgatedefinition))
         return ret
+
+    def build_definition(self, instruction, builder):
+        same_names = [i for i in self._subroutine_in_scope.values()
+                      if i.name == instruction.name]
+        if len(same_names) > 1:
+            subroutine_name = f"{instruction.name}_{id(instruction)}"
+        else:
+            subroutine_name = instruction.name
+        self._flat_reg = True
+        definition = builder(instruction, subroutine_name)
+        self._flat_reg = False
+        return definition
 
     def build_subroutinedefinition(self, instruction, name=None):
         if name is None:
@@ -152,8 +157,21 @@ class Qasm3Builder:
             instruction.definition.data), ReturnStatement())
         return SubroutineDefinition(Identifier(name), subroutineBlock, quantumArgumentList)
 
-    def build_quantumgatedefinition(self, gate):
-        pass  # TODO (check if standard gate. what to do there?)
+    def build_quantumgatedefinition(self, gate, name=None):
+        if name is None:
+            name = gate.name
+        quantumGateSignature = self.build_quantumGateSignature(gate.definition.qregs, name)
+        quantumBlock = QuantumBlock(self.build_quantuminstructions(gate.definition.data))
+        return QuantumGateDefinition(quantumGateSignature, quantumBlock)
+
+    def build_quantumGateSignature(self, qregs: [QuantumRegister], name):
+        identifierList = []
+        for qreg in qregs:
+            for qubit in qreg:
+                qubit_name = f"{qreg.name}_{qubit.index}"
+                identifierList.append(Identifier(qubit_name))
+
+        return QuantumGateSignature(Identifier(name), identifierList)
 
     def build_bitdeclarations(self):
         ret = []
