@@ -10,6 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+from itertools import chain
 from .grammar import *
 from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister
 from qiskit.circuit.bit import Bit
@@ -135,31 +136,38 @@ class Qasm3Builder:
             if instruction.name in ['U', 'h', 'u1', 'u2', 'u3', 'x', 'p', 's', 'sdg', 'y', 'z']:
                 continue
             ret.append(self.build_definition(instruction, self.build_quantumgatedefinition))
+        # for instruction in self._kernel_in_scope.values():
+        #     # TODO defcal
+        #     ret.append(self.build_definition(instruction, self.build_quantumgatedefinition))
         return ret
 
-    def build_definition(self, instruction, builder):
-        same_names = [i for i in self._subroutine_in_scope.values()
-                      if i.name == instruction.name]
+    def call_name(self, instruction):
+        all_in_scope = chain(self._subroutine_in_scope.values(),
+                             self._kernel_in_scope.values(),
+                             self._gate_in_scope.values(),
+                             )
+        same_names = [i for i in all_in_scope if i.name == instruction.name]
         if len(same_names) > 1:
-            subroutine_name = f"{instruction.name}_{id(instruction)}"
+            name = f"{instruction.name}_{id(instruction)}"
         else:
-            subroutine_name = instruction.name
+            name = instruction.name
+        return name
+
+    def build_definition(self, instruction, builder):
         self._flat_reg = True
-        definition = builder(instruction, subroutine_name)
+        definition = builder(instruction)
         self._flat_reg = False
         return definition
 
-    def build_subroutinedefinition(self, instruction, name=None):
-        if name is None:
-            name = instruction.name
+    def build_subroutinedefinition(self, instruction):
+        name = self.call_name(instruction)
         quantumArgumentList = self.build_quantumArgumentList(instruction.definition.qregs)
         subroutineBlock = SubroutineBlock(self.build_quantuminstructions(
             instruction.definition.data), ReturnStatement())
         return SubroutineDefinition(Identifier(name), subroutineBlock, quantumArgumentList)
 
-    def build_quantumgatedefinition(self, gate, name=None):
-        if name is None:
-            name = gate.name
+    def build_quantumgatedefinition(self, gate):
+        name = self.call_name(gate)
         quantumGateSignature = self.build_quantumGateSignature(gate.definition.qregs, name)
         quantumBlock = QuantumBlock(self.build_quantuminstructions(gate.definition.data))
         return QuantumGateDefinition(quantumGateSignature, quantumBlock)
@@ -238,14 +246,14 @@ class Qasm3Builder:
         return indexIdentifierList
 
     def build_quantumgatecall(self, instruction):
-        quantumGateName = Identifier(instruction[0].name)
+        quantumGateName = Identifier(self.call_name(instruction[0]))
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
         expressionList = [Expression(param) for param in instruction[0].params]
 
         return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
 
     def build_subroutinecall(self, instruction):
-        identifier = Identifier(instruction[0].name)
+        identifier = Identifier(self.call_name(instruction[0]))
         expressionList = [Expression(param) for param in instruction[0].params]
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
 
