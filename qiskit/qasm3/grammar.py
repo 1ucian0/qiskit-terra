@@ -21,6 +21,20 @@ class Class:
 class Statement(Class):
     pass
 
+class Pragma(Class):
+    def __init__(self, content):
+        self.content = content
+
+    def qasm(self):
+        return [f"#pragma {self.content};\n"]
+
+class CalibrationGrammarDeclaration(Statement):
+    def __init__(self, name):
+        self.name = name
+
+    def qasm(self):
+        return [f"defcalgrammar {self.name.qasm()};\n"]
+
 
 class Program(Class):
     def __init__(self, header, statements=None):

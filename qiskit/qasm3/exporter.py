@@ -48,11 +48,14 @@ from .grammar import (
     EqualsOperator,
     QuantumArgument,
     Expression,
+    Pragma,
+    CalibrationGrammarDeclaration,
 )
 
 
 class Exporter:
     """QASM3 expoter main class."""
+
     def __init__(
         self,
         quantumcircuit,  # QuantumCircuit
@@ -79,10 +82,45 @@ class Exporter:
     def qasm_tree(self):
         return Qasm3Builder(self.quantumcircuit, self.includes).build_program().qasm()
 
+
 class GlobalNamespace(MutableMapping):
-    # def __init__(self, names_in_scope):
-    #     for name in names_in_scope:
-    #         self.__dict__[name] = None
+    def __init__(self, includelist):
+        included_gates = [  # TODO make the list based on the includelist
+            "p",
+            # "x",
+            # "y",
+            "z",
+            "h",
+            "s",
+            "sdg",
+            "t",
+            "tdg",
+            "sx",
+            "rx",
+            "ry",
+            "rz",
+            # "cx",
+            "cy",
+            "cz",
+            "cp",
+            "crx",
+            "cry",
+            "crz",
+            "ch",
+            "swap",
+            "ccx",
+            "cswap",
+            "cu",
+            # "CX",
+            "phase",
+            "cphase",
+            "id",
+            "u1",
+            "u2",
+            "u3",
+        ]
+        for name in included_gates:
+            self.__dict__[name] = None
 
     def __setitem__(self, name_str, instruction):
         self.__dict__[name_str] = instruction
@@ -105,6 +143,7 @@ class GlobalNamespace(MutableMapping):
     def __contains__(self, item):
         return item in self.__dict__
 
+
 class Qasm3Builder:
     builtins = (Barrier, Measure)
 
@@ -113,9 +152,9 @@ class Qasm3Builder:
         self.includeslist = includeslist
         self._gate_in_scope = {}
         self._subroutine_in_scope = {}
-        self._kernel_in_scope = {}
+        self._opaque_in_scope = {}
         self._flat_reg = False
-        self.global_namespace = GlobalNamespace()
+        self.global_namespace = GlobalNamespace(includeslist)
 
     def _register_in_global_spacename(self, instruction):
         if instruction.name in self.global_namespace:
@@ -131,9 +170,9 @@ class Qasm3Builder:
         self._register_in_global_spacename(instruction)
         self._subroutine_in_scope[id(instruction)] = instruction
 
-    def _register_kernel(self, instruction):
+    def _register_opaque(self, instruction):
         self._register_in_global_spacename(instruction)
-        self._kernel_in_scope[id(instruction)] = instruction
+        self._opaque_in_scope[id(instruction)] = instruction
 
     def build_header(self):
         version = Version("3")
@@ -141,15 +180,15 @@ class Qasm3Builder:
         return Header(version, includes)
 
     def build_program(self):
-        self.hoist_subroutines_and_gates(self.quantumcircuit.data)
+        self.hoist_declarations(self.quantumcircuit.data)
         return Program(self.build_header(), self.build_globalstatements())
 
-    def hoist_subroutines_and_gates(self, instructions):
+    def hoist_declarations(self, instructions):
         for instruction in instructions:
             if instruction[0].definition is None:
-                self._register_kernel(instruction[0])
+                self._register_opaque(instruction[0])
             else:
-                self.hoist_subroutines_and_gates(instruction[0].definition.data)
+                self.hoist_declarations(instruction[0].definition.data)
                 if isinstance(instruction[0], Gate):
                     self._register_gate(instruction[0])
                 else:
@@ -199,38 +238,25 @@ class Qasm3Builder:
 
     def build_definitions(self):
         ret = []
+        for instruction in self._opaque_in_scope.values():
+            ret.append(self.build_definition(instruction, self.build_opaquedefinition))
         for instruction in self._subroutine_in_scope.values():
             if isinstance(instruction, self.builtins):
                 continue
             ret.append(self.build_definition(instruction, self.build_subroutinedefinition))
         for instruction in self._gate_in_scope.values():
-            # TODO if gate in standard library, this should be dynamic and similar to self.builtins
-            # if instruction.name in ["U", "h", "u1", "u2", "u3", "x", "p", "s", "sdg", "y", "z"]:
-            #     continue
             ret.append(self.build_definition(instruction, self.build_quantumgatedefinition))
-        # for instruction in self._kernel_in_scope.values():
-        #     # TODO defcal
-        #     ret.append(self.build_definition(instruction, self.build_quantumgatedefinition))
         return ret
-    #
-    # def call_name(self, instruction):
-    #     all_in_scope = chain(
-    #         self._subroutine_in_scope.values(),
-    #         self._kernel_in_scope.values(),
-    #         self._gate_in_scope.values(),
-    #     )
-    #     same_names = [i for i in all_in_scope if i.name == instruction.name]
-    #     if len(same_names) > 1:
-    #         name = f"{instruction.name}_{id(instruction)}"
-    #     else:
-    #         name = instruction.name
-    #     return name
 
     def build_definition(self, instruction, builder):
         self._flat_reg = True
         definition = builder(instruction)
         self._flat_reg = False
         return definition
+
+    def build_opaquedefinition(self, instruction):
+        name = self.global_namespace[instruction]
+        return CalibrationGrammarDeclaration(Identifier(name))
 
     def build_subroutinedefinition(self, instruction):
         name = self.global_namespace[instruction]
