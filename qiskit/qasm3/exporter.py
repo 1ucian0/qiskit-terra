@@ -10,13 +10,49 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# pylint: disable=invalid-name
+
+"""QASM3 Exporter"""
+
 from itertools import chain
-from .grammar import *
+
+
 from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister
 from qiskit.circuit.bit import Bit
+from .grammar import (
+    Program,
+    Version,
+    Include,
+    Header,
+    Identifier,
+    IndexIdentifier2,
+    QuantumBlock,
+    QuantumBarrier,
+    Designator,
+    Statement,
+    SubroutineCall,
+    SubroutineDefinition,
+    ReturnStatement,
+    SubroutineBlock,
+    BranchingStatement,
+    QuantumGateCall,
+    QuantumDeclaration,
+    QuantumGateSignature,
+    QuantumGateDefinition,
+    QuantumMeasurement,
+    QuantumMeasurementAssignment,
+    Integer,
+    ProgramBlock,
+    ComparisonExpression,
+    BitDeclaration,
+    EqualsOperator,
+    QuantumArgument,
+    Expression,
+)
 
 
 class Exporter:
+    """QASM3 expoter main class."""
     def __init__(
         self,
         quantumcircuit,  # QuantumCircuit

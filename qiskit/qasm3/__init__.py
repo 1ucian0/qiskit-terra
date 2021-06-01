@@ -23,5 +23,13 @@ from .exporter import Exporter
 
 
 def dumps(quantumcircuit):
+    """Serializes a :class:`~qiskit.circuit.QuantumCircuit` object in an OpenQASM3 string.
+
+    Args:
+        quantumcircuit (QuantumCircuit): Circuit to serialize.
+
+    Returns:
+        str: The OpenQASM3 serialization
+    """
     exporter = Exporter(quantumcircuit)
     return exporter.dumps()

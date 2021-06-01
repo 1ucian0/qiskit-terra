@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# pylint: disable=invalid-name
+
 
 class Class:
     def qasm(self):
@@ -81,7 +83,7 @@ class QuantumInstruction(Class):
         pass
 
     def qasm(self):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class Identifier(Class):

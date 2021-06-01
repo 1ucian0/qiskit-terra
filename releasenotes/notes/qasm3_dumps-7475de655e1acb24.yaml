@@ -1,0 +1,19 @@
+---
+features:
+  - |
+    Initial support for OpenQASM3 serializer. 
+
+    .. jupyter-execute::
+
+            from qiskit import QuantumCircuit
+            from qiskit import qasm3
+
+            qc = QuantumCircuit(2)
+            qc.h(0)
+            qc.cx(0, 1)
+
+            print(qasm3.dumps(qc))
+
+    This initial release has limited support for named registers, basic buildin instructions
+    (just as measure and barriers), user-defined gates, user-defined instructions (as
+    subroutines), and opaque gates/instructions as ``defcal``.
