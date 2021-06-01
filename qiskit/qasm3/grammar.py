@@ -142,6 +142,7 @@ class IndexIdentifier2(IndexIdentifier):
         else:
             return f"{self.identifier.qasm()}"
 
+
 class QuantumMeasurement(Class):
     """
     quantumMeasurement
@@ -332,6 +333,7 @@ class QuantumBlock(ProgramBlock):
     quantumBlock
         : LBRACE ( quantumStatement | quantumLoop )* RBRACE
     """
+
     pass
 
 
@@ -350,17 +352,20 @@ class QuantumArgument(QuantumDeclaration):
     quantumArgument
         : 'qreg' Identifier designator? | 'qubit' designator? Identifier
     """
+
     def qasm(self):
         if self.designator:
             return f"qubit{self.designator.qasm()} {self.identifier.qasm()}"
         else:
             return f"qubit {self.identifier.qasm()}"
 
+
 class QuantumGateSignature(Class):
     """
     quantumGateSignature
         : quantumGateName ( LPAREN identifierList? RPAREN )? identifierList
     """
+
     def __init__(self, quantumGateName: Identifier, identifierList: [Identifier]):
         self.quantumGateName = quantumGateName
         self.identifierList = identifierList or []
@@ -368,14 +373,14 @@ class QuantumGateSignature(Class):
     def qasm(self):
         return f"{self.quantumGateName.qasm()} {', '.join([i.qasm() for i in self.identifierList])}"
 
+
 class QuantumGateDefinition(Statement):
     """
     quantumGateDefinition
         : 'gate' quantumGateSignature quantumBlock
     """
-    def __init__(self,
-                 quantumGateSignature: QuantumGateSignature,
-                 quantumBlock: QuantumBlock):
+
+    def __init__(self, quantumGateSignature: QuantumGateSignature, quantumBlock: QuantumBlock):
         self.quantumGateSignature = quantumGateSignature
         self.quantumBlock = quantumBlock
 

@@ -28,12 +28,12 @@ class Exporter:
     def requiered_includes(self):
         return []  # TODO
 
-    def dump(self):
+    def dumps(self):
         tree = self.qasm_tree()
         return self.flatten_tree(tree)
 
     def flatten_tree(self, tree):
-        ret = ''
+        ret = ""
         if isinstance(tree, str):
             return tree
         for child in tree:
@@ -42,6 +42,7 @@ class Exporter:
 
     def qasm_tree(self):
         return Qasm3Builder(self.quantumcircuit, self.includes).build_program().qasm()
+
 
 class Qasm3Builder:
     builtins = (Barrier, Measure)
@@ -64,7 +65,7 @@ class Qasm3Builder:
         self._kernel_in_scope[instruction.name] = instruction
 
     def build_header(self):
-        version = Version('3')
+        version = Version("3")
         includes = self.build_includes()
         return Header(version, includes)
 
@@ -133,7 +134,7 @@ class Qasm3Builder:
             ret.append(self.build_definition(instruction, self.build_subroutinedefinition))
         for instruction in self._gate_in_scope.values():
             # TODO if gate in standard library, this should be dynamic and similar to self.builtins
-            if instruction.name in ['U', 'h', 'u1', 'u2', 'u3', 'x', 'p', 's', 'sdg', 'y', 'z']:
+            if instruction.name in ["U", "h", "u1", "u2", "u3", "x", "p", "s", "sdg", "y", "z"]:
                 continue
             ret.append(self.build_definition(instruction, self.build_quantumgatedefinition))
         # for instruction in self._kernel_in_scope.values():
@@ -142,10 +143,11 @@ class Qasm3Builder:
         return ret
 
     def call_name(self, instruction):
-        all_in_scope = chain(self._subroutine_in_scope.values(),
-                             self._kernel_in_scope.values(),
-                             self._gate_in_scope.values(),
-                             )
+        all_in_scope = chain(
+            self._subroutine_in_scope.values(),
+            self._kernel_in_scope.values(),
+            self._gate_in_scope.values(),
+        )
         same_names = [i for i in all_in_scope if i.name == instruction.name]
         if len(same_names) > 1:
             name = f"{instruction.name}_{id(instruction)}"
@@ -162,8 +164,9 @@ class Qasm3Builder:
     def build_subroutinedefinition(self, instruction):
         name = self.call_name(instruction)
         quantumArgumentList = self.build_quantumArgumentList(instruction.definition.qregs)
-        subroutineBlock = SubroutineBlock(self.build_quantuminstructions(
-            instruction.definition.data), ReturnStatement())
+        subroutineBlock = SubroutineBlock(
+            self.build_quantuminstructions(instruction.definition.data), ReturnStatement()
+        )
         return SubroutineDefinition(Identifier(name), subroutineBlock, quantumArgumentList)
 
     def build_quantumgatedefinition(self, gate):
@@ -201,9 +204,9 @@ class Qasm3Builder:
                     eqcondition = self.build_eqcondition(instruction[0].condition)
                     instruciton_without_condition = instruction[0].copy()
                     instruciton_without_condition.condition = None
-                    programTrue = self.build_programblock([(instruciton_without_condition,
-                                                            instruction[1],
-                                                            instruction[2])])
+                    programTrue = self.build_programblock(
+                        [(instruciton_without_condition, instruction[1], instruction[2])]
+                    )
                     ret.append(BranchingStatement(eqcondition, programTrue))
                 else:
                     ret.append(self.build_quantumgatecall(instruction))
@@ -211,7 +214,9 @@ class Qasm3Builder:
                 indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
                 ret.append(QuantumBarrier(indexIdentifierList))
             elif isinstance(instruction[0], Measure):
-                quantumMeasurement = QuantumMeasurement(self.build_indexIdentifierlist(instruction[1]))
+                quantumMeasurement = QuantumMeasurement(
+                    self.build_indexIdentifierlist(instruction[1])
+                )
                 indexIdentifierList = self.build_indexidentifier(instruction[2][0])
                 ret.append(QuantumMeasurementAssignment(indexIdentifierList, quantumMeasurement))
             else:
@@ -223,9 +228,9 @@ class Qasm3Builder:
 
     def build_eqcondition(self, condition):
         """Classical Conditional condition from a instruction.condition"""
-        return ComparisonExpression(Identifier(condition[0].name),
-                                     EqualsOperator(),
-                                     Integer(condition[1]))
+        return ComparisonExpression(
+            Identifier(condition[0].name), EqualsOperator(), Integer(condition[1])
+        )
 
     def build_quantumArgumentList(self, qregs: [QuantumRegister]):
         quantumArgumentList = []
@@ -235,8 +240,9 @@ class Qasm3Builder:
                     qubit_name = f"{qreg.name}_{qubit.index}"
                     quantumArgumentList.append(QuantumArgument(Identifier(qubit_name)))
             else:
-                quantumArgumentList.append(QuantumArgument(Identifier(qreg.name),
-                                                              Designator(Integer(qreg.size))))
+                quantumArgumentList.append(
+                    QuantumArgument(Identifier(qreg.name), Designator(Integer(qreg.size)))
+                )
         return quantumArgumentList
 
     def build_indexIdentifierlist(self, bitlist: [Bit]):

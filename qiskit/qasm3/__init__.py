@@ -22,6 +22,6 @@ Qasm (:mod:`qiskit.qasm3`)
 from .exporter import Exporter
 
 
-def dump(quantumcircuit):
+def dumps(quantumcircuit):
     exporter = Exporter(quantumcircuit)
-    return exporter.qasm_tree()
+    return exporter.dumps()
