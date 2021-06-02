@@ -17,7 +17,7 @@
 from collections.abc import MutableMapping
 
 from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction
-from qiskit.circuit.library.standard_gates import CXGate, UGate
+from qiskit.circuit.library.standard_gates import CXGate, UGate, XGate, HGate
 from qiskit.circuit.bit import Bit
 from .grammar import (
     Program,
@@ -48,7 +48,6 @@ from .grammar import (
     EqualsOperator,
     QuantumArgument,
     Expression,
-    Pragma,
     CalibrationGrammarDeclaration,
 )
 
@@ -85,42 +84,42 @@ class Exporter:
 
 class GlobalNamespace(MutableMapping):
     def __init__(self, includelist):
-        included_gates = [  # TODO make the list based on the includelist
-            "p",
-            # "x",
+        included_gates = {  # TODO make the list based on the includelist
+            # "p",
+            "x": XGate(),
             # "y",
-            "z",
-            "h",
-            "s",
-            "sdg",
-            "t",
-            "tdg",
-            "sx",
-            "rx",
-            "ry",
-            "rz",
-            # "cx",
-            "cy",
-            "cz",
-            "cp",
-            "crx",
-            "cry",
-            "crz",
-            "ch",
-            "swap",
-            "ccx",
-            "cswap",
-            "cu",
-            # "CX",
-            "phase",
-            "cphase",
-            "id",
-            "u1",
-            "u2",
-            "u3",
-        ]
-        for name in included_gates:
-            self.__dict__[name] = None
+            # "z",
+            "h": HGate(),
+            # "s",
+            # "sdg",
+            # "t",
+            # "tdg",
+            # "sx",
+            # "rx",
+            # "ry",
+            # "rz",
+            "cx": CXGate(),
+            # "cy",
+            # "cz",
+            # "cp",
+            # "crx",
+            # "cry",
+            # "crz",
+            # "ch",
+            # "swap",
+            # "ccx",
+            # "cswap",
+            # "cu",
+            # # "CX",
+            # "phase",
+            # "cphase",
+            # "id",
+            # "u1",
+            # "u2",
+            # "u3",
+        }
+        for name, instance in included_gates.items():
+            self[name] = instance
 
     def __setitem__(self, name_str, instruction):
         self.__dict__[name_str] = instruction
@@ -128,8 +127,8 @@ class GlobalNamespace(MutableMapping):
 
     def __getitem__(self, key):
         if isinstance(key, Instruction):
-            return self.__dict__[id(key)]
-        return self.__dict__[id(key)]
+            return self.__dict__.get(id(key), key.name)
+        return self.__dict__[key]
 
     def __delitem__(self, key):
         del self.__dict__[key]
@@ -143,6 +142,17 @@ class GlobalNamespace(MutableMapping):
     def __contains__(self, item):
         return item in self.__dict__
 
+    def exists(self, instruction):
+        if type(instruction) in [Gate, Instruction]:  # user-defined instructions/gate
+            return self.get(instruction.name, None) == instruction
+        return instruction.name in self and isinstance(instruction, type(self[instruction.name]))
+
+    def register(self, instruction):
+        if instruction.name in self.__dict__:
+            self[f"{instruction.name}_{id(instruction)}"] = instruction
+        else:
+            self[instruction.name] = instruction
+
 
 class Qasm3Builder:
     builtins = (Barrier, Measure)
@@ -150,29 +160,24 @@ class Qasm3Builder:
     def __init__(self, quantumcircuit, includeslist):
         self.quantumcircuit = quantumcircuit
         self.includeslist = includeslist
-        self._gate_in_scope = {}
-        self._subroutine_in_scope = {}
-        self._opaque_in_scope = {}
+        self._gate_to_declare = {}
+        self._subroutine_to_declare = {}
+        self._opaque_to_declare = {}
         self._flat_reg = False
         self.global_namespace = GlobalNamespace(includeslist)
 
-    def _register_in_global_spacename(self, instruction):
-        if instruction.name in self.global_namespace:
-            self.global_namespace[f"{instruction.name}_{id(instruction)}"] = instruction
-        else:
-            self.global_namespace[instruction.name] = instruction
-
     def _register_gate(self, gate):
-        self._register_in_global_spacename(gate)
-        self._gate_in_scope[id(gate)] = gate
+        self.global_namespace.register(gate)
+        self._gate_to_declare[id(gate)] = gate
 
     def _register_subroutine(self, instruction):
-        self._register_in_global_spacename(instruction)
-        self._subroutine_in_scope[id(instruction)] = instruction
+        self.global_namespace.register(instruction)
+        self._subroutine_to_declare[id(instruction)] = instruction
 
     def _register_opaque(self, instruction):
-        self._register_in_global_spacename(instruction)
-        self._opaque_in_scope[id(instruction)] = instruction
+        if not self.global_namespace.exists(instruction):
+            self.global_namespace.register(instruction)
+            self._opaque_to_declare[id(instruction)] = instruction
 
     def build_header(self):
         version = Version("3")
@@ -185,6 +190,8 @@ class Qasm3Builder:
 
     def hoist_declarations(self, instructions):
         for instruction in instructions:
+            if self.global_namespace.exists(instruction[0]) or isinstance(instruction[0], self.builtins):
+                continue
             if instruction[0].definition is None:
                 self._register_opaque(instruction[0])
             else:
@@ -238,13 +245,11 @@ class Qasm3Builder:
 
     def build_definitions(self):
         ret = []
-        for instruction in self._opaque_in_scope.values():
+        for instruction in self._opaque_to_declare.values():
             ret.append(self.build_definition(instruction, self.build_opaquedefinition))
-        for instruction in self._subroutine_in_scope.values():
-            if isinstance(instruction, self.builtins):
-                continue
+        for instruction in self._subroutine_to_declare.values():
             ret.append(self.build_definition(instruction, self.build_subroutinedefinition))
-        for instruction in self._gate_in_scope.values():
+        for instruction in self._gate_to_declare.values():
             ret.append(self.build_definition(instruction, self.build_quantumgatedefinition))
         return ret
 
