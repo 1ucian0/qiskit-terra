@@ -137,44 +137,43 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(qc).dumps(), expected_qasm)
 
-    # def test_custom_gate(self):
-    #     """Test custom gates (via to_gate).
-    #     """
-    #
-    #     composite_circ_qreg = QuantumRegister(2)
-    #     composite_circ = QuantumCircuit(composite_circ_qreg, name="composite_circ")
-    #     composite_circ.h(0)
-    #     composite_circ.x(1)
-    #     composite_circ.cx(0, 1)
-    #     composite_circ_instr = composite_circ.to_gate()
-    #
-    #     qr = QuantumRegister(2, "qr")
-    #     cr = ClassicalRegister(2, "cr")
-    #     qc = QuantumCircuit(qr, cr)
-    #     qc.h(0)
-    #     qc.cx(0, 1)
-    #     qc.barrier()
-    #     qc.append(composite_circ_instr, [0, 1])
-    #     qc.measure([0, 1], [0, 1])
-    #
-    #     expected_qasm = '\n'.join(["OPENQASM 3;",
-    #                                "gate composite_circ q_0, q_1 {",
-    #                                "h q_0;",
-    #                                "x q_1;",
-    #                                "cx q_0, q_1;",
-    #                                "return;",
-    #                                "}",
-    #                                "bit[2] cr;",
-    #                                "qubit[2] qr;",
-    #                                "h qr[0];",
-    #                                "cx qr[0], qr[1];",
-    #                                "barrier qr[0], qr[1];",
-    #                                "composite_circ qr[0], qr[1];",
-    #                                "cr[0] = measure qr[0];",
-    #                                "cr[1] = measure qr[1];",
-    #                                ""
-    #                                ])
-    #     self.assertEqual(Exporter(qc).dump(), expected_qasm)
+    def test_custom_gate(self):
+        """Test custom gates (via to_gate).
+        """
+
+        composite_circ_qreg = QuantumRegister(2)
+        composite_circ = QuantumCircuit(composite_circ_qreg, name="composite_circ")
+        composite_circ.h(0)
+        composite_circ.x(1)
+        composite_circ.cx(0, 1)
+        composite_circ_instr = composite_circ.to_gate()
+
+        qr = QuantumRegister(2, "qr")
+        cr = ClassicalRegister(2, "cr")
+        qc = QuantumCircuit(qr, cr)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.barrier()
+        qc.append(composite_circ_instr, [0, 1])
+        qc.measure([0, 1], [0, 1])
+
+        expected_qasm = '\n'.join(["OPENQASM 3;",
+                                   "gate composite_circ q_0, q_1 {",
+                                   "h q_0;",
+                                   "x q_1;",
+                                   "cx q_0, q_1;",
+                                   "}",
+                                   "bit[2] cr;",
+                                   "qubit[2] qr;",
+                                   "h qr[0];",
+                                   "cx qr[0], qr[1];",
+                                   "barrier qr[0], qr[1];",
+                                   "composite_circ qr[0], qr[1];",
+                                   "cr[0] = measure qr[0];",
+                                   "cr[1] = measure qr[1];",
+                                   ""
+                                   ])
+        self.assertEqual(Exporter(qc).dumps(), expected_qasm)
 
     def test_circuit_qasm_with_multiple_same_composite_circuits(self):
         """Test circuit qasm() method when a composite circuit is added
