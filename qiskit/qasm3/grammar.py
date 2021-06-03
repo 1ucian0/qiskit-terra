@@ -382,12 +382,18 @@ class QuantumGateSignature(Class):
         : quantumGateName ( LPAREN identifierList? RPAREN )? identifierList
     """
 
-    def __init__(self, quantumGateName: Identifier, identifierList: [Identifier]):
-        self.quantumGateName = quantumGateName
-        self.identifierList = identifierList or []
+    def __init__(self, name: Identifier, qargList: [Identifier], params: [Identifier]=None):
+        self.name = name
+        self.qargList = qargList
+        self.params = params
 
     def qasm(self):
-        return f"{self.quantumGateName.qasm()} {', '.join([i.qasm() for i in self.identifierList])}"
+        qargList = ', '.join([i.qasm() for i in self.qargList])
+        name = self.name.qasm()
+        if self.params:
+            params = ', '.join([i.qasm() for i in self.params])
+            return f"{name}({params}) {qargList}"
+        return f"{name} {qargList}"
 
 
 class QuantumGateDefinition(Statement):

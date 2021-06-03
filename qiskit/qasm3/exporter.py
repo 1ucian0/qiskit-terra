@@ -273,19 +273,30 @@ class Qasm3Builder:
         return SubroutineDefinition(Identifier(name), subroutineBlock, quantumArgumentList)
 
     def build_quantumgatedefinition(self, gate):
-        name = self.global_namespace[gate]
-        quantumGateSignature = self.build_quantumGateSignature(gate.definition.qregs, name)
+        quantumGateSignature = self.build_quantumGateSignature(gate)
+
+        # quantumGateSignature = self.build_quantumGateSignature(name,
+        #                                                        gate_parameters,
+        #                                                        gate.definition.qregs)
         quantumBlock = QuantumBlock(self.build_quantuminstructions(gate.definition.data))
         return QuantumGateDefinition(quantumGateSignature, quantumBlock)
 
-    def build_quantumGateSignature(self, qregs: [QuantumRegister], name):
-        identifierList = []
-        for qreg in qregs:
+    def build_quantumGateSignature(self, gate):
+        name = self.global_namespace[gate]
+
+        # Dummy parameters
+        params = []
+        for num in range(len(gate.params)):
+            param_name = f"param_{num}"
+            params.append(Identifier(param_name))
+
+        qargList = []
+        for qreg in gate.definition.qregs:
             for qubit in qreg:
                 qubit_name = f"{qreg.name}_{qubit.index}"
-                identifierList.append(Identifier(qubit_name))
+                qargList.append(Identifier(qubit_name))
 
-        return QuantumGateSignature(Identifier(name), identifierList)
+        return QuantumGateSignature(Identifier(name), qargList, params or None)
 
     def build_bitdeclarations(self):
         ret = []
