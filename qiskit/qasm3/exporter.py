@@ -16,6 +16,7 @@
 
 from collections.abc import MutableMapping
 
+from qiskit.circuit.tools import pi_check
 from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction
 from qiskit.circuit.library.standard_gates import CXGate, UGate, XGate, HGate
 from qiskit.circuit.bit import Bit
@@ -356,7 +357,7 @@ class Qasm3Builder:
     def build_quantumgatecall(self, instruction):
         quantumGateName = Identifier(self.global_namespace[instruction[0]])
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
-        expressionList = [Expression(param) for param in instruction[0].params]
+        expressionList = [Expression(pi_check(param, output="qasm")) for param in instruction[0].params]
 
         return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
 

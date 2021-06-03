@@ -15,7 +15,7 @@
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 from qiskit.test import QiskitTestCase
 from qiskit.qasm3 import Exporter
-
+from qiskit.qasm import pi
 
 class TestCircuitQasm3(QiskitTestCase):
     """QASM3 exporter."""
@@ -48,22 +48,22 @@ class TestCircuitQasm3(QiskitTestCase):
              "u(0, 0, 0.3) q_0;",
              "}",
              "gate u3 q_0 {",
-             "u(0, 0, 1.5707963267948966) q_0;",
+             "u(0, 0, pi/2) q_0;",
              "}",
              "gate u1 q_0 {",
-             "u3(0, 0, 1.5707963267948966) q_0;",
+             "u3(0, 0, pi/2) q_0;",
              "}",
              "gate s q_0 {",
-             "u1(1.5707963267948966) q_0;",
+             "u1(pi/2) q_0;",
              "}",
              "gate sdg q_0 {",
-             "u1(-1.5707963267948966) q_0;",
+             "u1(-pi/2) q_0;",
              "}",
              "gate y q_0 {",
-             "u3(3.141592653589793, 1.5707963267948966, 1.5707963267948966) q_0;",
+             "u3(pi, pi/2, pi/2) q_0;",
              "}",
              "gate z q_0 {",
-             "u1(3.141592653589793) q_0;",
+             "u1(pi) q_0;",
              "}",
              "bit[3] cr;",
              "qubit[1] qr1;",
@@ -269,16 +269,15 @@ class TestCircuitQasm3(QiskitTestCase):
 
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
-    #
-    #     def test_circuit_qasm_pi(self):
-    #         """Test circuit qasm() method with pi params."""
-    #         circuit = QuantumCircuit(2)
-    #         circuit.cz(0, 1)
-    #         circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
-    #         qasm_str = circuit.qasm()
-    #         circuit2 = QuantumCircuit.from_qasm_str(qasm_str)
-    #         self.assertEqual(circuit, circuit2)
-    #
+    def test_circuit_qasm_pi(self):
+        """Test circuit qasm() method with pi params."""
+        circuit = QuantumCircuit(2)
+        circuit.cz(0, 1)
+        circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
+        qasm_str = circuit.qasm()
+        circuit2 = QuantumCircuit.from_qasm_str(qasm_str)
+        self.assertEqual(circuit, circuit2)
+
     #     def test_circuit_qasm_with_composite_circuit_with_one_param(self):
     #         """Test circuit qasm() method when a composite circuit instruction
     #         has one param
