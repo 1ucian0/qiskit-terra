@@ -17,6 +17,7 @@ from qiskit.test import QiskitTestCase
 from qiskit.qasm3 import Exporter
 from qiskit.qasm import pi
 
+
 class TestCircuitQasm3(QiskitTestCase):
     """QASM3 exporter."""
 
@@ -272,11 +273,16 @@ class TestCircuitQasm3(QiskitTestCase):
     def test_circuit_qasm_pi(self):
         """Test circuit qasm() method with pi params."""
         circuit = QuantumCircuit(2)
-        circuit.cz(0, 1)
         circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
-        qasm_str = circuit.qasm()
-        circuit2 = QuantumCircuit.from_qasm_str(qasm_str)
-        self.assertEqual(circuit, circuit2)
+        expected_qasm = "\n".join(
+            [
+                "OPENQASM 3;",
+                "defcalgrammar u;",
+                "qubit[2] q;",
+                "u(2*pi, 3*pi, -5*pi) q[0];",
+                "",
+            ])
+        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
     #     def test_circuit_qasm_with_composite_circuit_with_one_param(self):
     #         """Test circuit qasm() method when a composite circuit instruction
