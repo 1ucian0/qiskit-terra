@@ -63,15 +63,15 @@ class Header(Class):
 
 
 class Include(Class):
-    def __init__(self, filenames):
+    def __init__(self, filename):
         """
         include
             : 'include' StringLiteral SEMICOLON
         """
-        self.filenames = filenames
+        self.filename = filename
 
     def qasm(self):
-        return [f"include {filename};\n" for filename in self.filenames]
+        return [f"include {self.filename};\n"]
 
 
 class Version(Class):
