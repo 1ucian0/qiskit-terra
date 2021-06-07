@@ -382,7 +382,10 @@ class Qasm3Builder:
         return indexIdentifierList
 
     def build_quantumgatecall(self, instruction):
-        quantumGateName = Identifier(self.global_namespace[instruction[0]])
+        if isinstance(instruction[0], UGate):
+            quantumGateName = Identifier('U')
+        else:
+            quantumGateName = Identifier(self.global_namespace[instruction[0]])
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
         expressionList = [
             Expression(pi_check(param, output="qasm")) for param in instruction[0].params
