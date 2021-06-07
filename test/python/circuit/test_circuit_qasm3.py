@@ -22,8 +22,8 @@ from qiskit.qasm import pi
 class TestCircuitQasm3(QiskitTestCase):
     """QASM3 exporter."""
 
-    def test_circuit_qasm(self):
-        """Test circuit qasm() method."""
+    def test_regs_conds_qasm(self):
+        """Test with registers and conditionals."""
         qr1 = QuantumRegister(1, "qr1")
         qr2 = QuantumRegister(2, "qr2")
         cr = ClassicalRegister(3, "cr")
@@ -96,11 +96,8 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(qc).dumps(), expected_qasm)
 
-    def test_circuit_qasm_with_composite_circuit(self):
-        """Test circuit qasm() method when a composite circuit instruction
-        is included within circuit.
-        """
-
+    def test_composite_circuit(self):
+        """Test with a composite circuit instruction and barriers"""
         composite_circ_qreg = QuantumRegister(2)
         composite_circ = QuantumCircuit(composite_circ_qreg, name="composite_circ")
         composite_circ.h(0)
@@ -141,7 +138,6 @@ class TestCircuitQasm3(QiskitTestCase):
 
     def test_custom_gate(self):
         """Test custom gates (via to_gate)."""
-
         composite_circ_qreg = QuantumRegister(2)
         composite_circ = QuantumCircuit(composite_circ_qreg, name="composite_circ")
         composite_circ.h(0)
@@ -179,11 +175,8 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(qc).dumps(), expected_qasm)
 
-    def test_circuit_qasm_with_multiple_same_composite_circuits(self):
-        """Test circuit qasm() method when a composite circuit is added
-        to the circuit multiple times
-        """
-
+    def test_same_composite_circuits(self):
+        """Test when a composite circuit is added to the circuit multiple times."""
         composite_circ_qreg = QuantumRegister(2)
         composite_circ = QuantumCircuit(composite_circ_qreg, name="composite_circ")
         composite_circ.h(0)
@@ -224,11 +217,9 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(qc).dumps(), expected_qasm)
 
-    def test_circuit_qasm_with_multiple_composite_circuits_with_same_name(self):
-        """Test circuit qasm() method when multiple composite circuit instructions
-        with the same circuit name are added to the circuit
+    def test_composite_circuits_with_same_name(self):
+        """Test when multiple composite circuit instructions same name and different implementation
         """
-
         my_gate = QuantumCircuit(1, name="my_gate")
         my_gate.h(0)
         my_gate_inst1 = my_gate.to_instruction()
@@ -273,8 +264,8 @@ class TestCircuitQasm3(QiskitTestCase):
 
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
-    def test_circuit_qasm_pi(self):
-        """Test circuit qasm() method with pi params."""
+    def test_pi(self):
+        """Test pi constant."""
         circuit = QuantumCircuit(2)
         circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
         expected_qasm = "\n".join(
@@ -287,8 +278,8 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
-    def test_qasm_with_composite_circuit_with_one_param_from_qasm2(self):
-        """ """
+    def test_from_qasm2_with_composite_circuit_with_one_param(self):
+        """Test circuit from QASM2 with a parametrized custom gate."""
         qasm2 = "\n".join(
             [
                 "OPENQASM 2.0;",
@@ -316,8 +307,8 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
-    def test_qasm_with_composite_circuit_with_one_param_from_qiskit(self):
-        """ """
+    def test_from_qasm2_with_composite_circuit_with_three_param(self):
+        """Test circuit from QASM2 with three parametrized custom gate."""
         parameter_a = Parameter("a")
 
         custom = QuantumCircuit(1)
@@ -350,10 +341,8 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
-    def test_circuit_qasm_with_composite_circuit_with_many_params_and_qubits(self):
-        """Test circuit qasm() method when a composite circuit instruction
-        has many params and qubits
-        """
+    def test_from_qasm2_many_params_and_qubits(self):
+        """Test circuit from QASM2 with many parameters and qubits."""
 
         qasm2 = "\n".join(
             [
@@ -389,7 +378,7 @@ class TestCircuitQasm3(QiskitTestCase):
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
     def test_unbound_circuit(self):
-        """Test circuits with unbound parameters raises."""
+        """Test with unbound parameters (turning them into inputs)."""
         qc = QuantumCircuit(1)
         theta = Parameter("θ")
         qc.rz(theta, 0)
@@ -414,7 +403,7 @@ class TestCircuitQasm3(QiskitTestCase):
         self.assertEqual(Exporter(qc).dumps(), expected_qasm)
 
     def test_gate_qasm_with_ctrl_state(self):
-        """Test gate qasm() with controlled gate that has ctrl_state setting."""
+        """Test with open controlled gate that has ctrl_state"""
         qc = QuantumCircuit(2)
         qc.ch(0, 1, ctrl_state=0)
 
