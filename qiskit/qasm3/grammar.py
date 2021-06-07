@@ -21,12 +21,14 @@ class Class:
 class Statement(Class):
     pass
 
+
 class Pragma(Class):
     def __init__(self, content):
         self.content = content
 
     def qasm(self):
         return [f"#pragma {self.content};\n"]
+
 
 class CalibrationGrammarDeclaration(Statement):
     def __init__(self, name):
@@ -243,11 +245,11 @@ class QuantumGateCall(QuantumInstruction):
     """
 
     def __init__(
-        self,
-        quantumGateName: Identifier,
-        indexIdentifierList: [Identifier],
-        expressionList=[Expression],
-        quantumGateModifier=None,
+            self,
+            quantumGateName: Identifier,
+            indexIdentifierList: [Identifier],
+            expressionList=[Expression],
+            quantumGateModifier=None,
     ):
         self.quantumGateName = quantumGateName
         self.indexIdentifierList = indexIdentifierList
@@ -275,10 +277,10 @@ class SubroutineCall(ExpressionTerminator):
     """
 
     def __init__(
-        self,
-        identifier: Identifier,
-        indexIdentifierList: [Identifier],
-        expressionList: [Expression] = None,
+            self,
+            identifier: Identifier,
+            indexIdentifierList: [Identifier],
+            expressionList: [Expression] = None,
     ):
         self.identifier = identifier
         self.indexIdentifierList = indexIdentifierList
@@ -382,7 +384,7 @@ class QuantumGateSignature(Class):
         : quantumGateName ( LPAREN identifierList? RPAREN )? identifierList
     """
 
-    def __init__(self, name: Identifier, qargList: [Identifier], params: [Identifier]=None):
+    def __init__(self, name: Identifier, qargList: [Identifier], params: [Identifier] = None):
         self.name = name
         self.qargList = qargList
         self.params = params
@@ -418,11 +420,11 @@ class SubroutineDefinition(Statement):
     """
 
     def __init__(
-        self,
-        identifier: Identifier,
-        subroutineBlock: SubroutineBlock,
-        quantumArgumentList: [QuantumArgument] = None,
-        classicalArgumentList=None,  # [ClassicalArgument]
+            self,
+            identifier: Identifier,
+            subroutineBlock: SubroutineBlock,
+            quantumArgumentList: [QuantumArgument] = None,
+            classicalArgumentList=None,  # [ClassicalArgument]
     ):
         self.identifier = identifier
         self.subroutineBlock = subroutineBlock
@@ -432,10 +434,44 @@ class SubroutineDefinition(Statement):
     def qasm(self):
         if self.quantumArgumentList:
             return [
-                f"def {self.identifier.qasm()} "
-                f"{', '.join([i.qasm() for i in self.quantumArgumentList])} "
-            ] + self.subroutineBlock.qasm()
+                       f"def {self.identifier.qasm()} "
+                       f"{', '.join([i.qasm() for i in self.quantumArgumentList])} "
+                   ] + self.subroutineBlock.qasm()
         return [f"def {self.identifier.qasm()} "] + self.subroutineBlock.qasm()
+
+
+class CalibrationArgument(Class):
+    pass
+
+
+class CalibrationDefinition(Statement):
+    """
+    calibrationDefinition
+        : 'defcal' Identifier
+        ( LPAREN calibrationArgumentList? RPAREN )? identifierList
+        returnSignature? LBRACE .*? RBRACE  // for now, match anything inside body
+        ;
+    """
+
+    def __init__(
+            self,
+            name: Identifier,
+            identifierList: [Identifier],
+            calibrationArgumentList: [CalibrationArgument] = None,
+            block: SubroutineBlock = None,
+    ):
+        self.name = name
+        self.identifierList = identifierList
+        self.calibrationArgumentList = calibrationArgumentList or []
+        self.block = block or []
+
+    def qasm(self):
+        name = self.name.qasm()
+        identifierList = f"{', '.join([i.qasm() for i in self.identifierList])} "
+        calibrationArgumentList = f"{', '.join([i.qasm() for i in self.calibrationArgumentList])} " if self.calibrationArgumentList else ""
+        block = self.block.qasm() if self.block else ['{}']
+
+        return [f"defcal {name} {identifierList}{calibrationArgumentList}"] + block + ['\n']
 
 
 class BooleanExpression(Class):
@@ -475,7 +511,7 @@ class ComparisonExpression(BooleanExpression):
     """
 
     def __init__(
-        self, left: Expression, relation: RelationalOperator = None, right: Expression = None
+            self, left: Expression, relation: RelationalOperator = None, right: Expression = None
     ):
         self.left = left
         self.relation = relation
@@ -492,7 +528,7 @@ class BranchingStatement(Statement):
     """
 
     def __init__(
-        self, booleanExpression: BooleanExpression, programTrue: ProgramBlock, programFalse=None
+            self, booleanExpression: BooleanExpression, programTrue: ProgramBlock, programFalse=None
     ):
         self.booleanExpression = booleanExpression
         self.programTrue = programTrue

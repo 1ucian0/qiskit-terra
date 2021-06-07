@@ -45,12 +45,11 @@ class TestCircuitQasm3(QiskitTestCase):
         qc.measure(qr2[1], cr[2])
         expected_qasm = "\n".join(
             ["OPENQASM 3;",
-             "defcalgrammar u;",
              "gate p(param_0) q_0 {",
-             "u(0, 0, 0.3) q_0;",
+             "U(0, 0, 0.3) q_0;",
              "}",
              "gate u3(param_0, param_1, param_2) q_0 {",
-             "u(0, 0, pi/2) q_0;",
+             "U(0, 0, pi/2) q_0;",
              "}",
              "gate u1(param_0) q_0 {",
              "u3(0, 0, pi/2) q_0;",
@@ -71,7 +70,7 @@ class TestCircuitQasm3(QiskitTestCase):
              "qubit[1] qr1;",
              "qubit[2] qr2;",
              "p(0.3) qr1[0];",
-             "u(0.3, 0.2, 0.1) qr2[1];",
+             "U(0.3, 0.2, 0.1) qr2[1];",
              "s qr2[1];",
              "sdg qr2[1];",
              "cx qr1[0], qr2[1];",
@@ -277,9 +276,8 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "defcalgrammar u;",
                 "qubit[2] q;",
-                "u(2*pi, 3*pi, -5*pi) q[0];",
+                "U(2*pi, 3*pi, -5*pi) q[0];",
                 "",
             ])
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
@@ -326,9 +324,8 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "defcalgrammar u;",
                 "gate u3(param_0, param_1, param_2) q_0 {",
-                "u(0.500000000000000, -pi/2, pi/2) q_0;",
+                "U(0.500000000000000, -pi/2, pi/2) q_0;",
                 "}",
                 "gate r(param_0, param_1) q_0 {",
                 "u3(0.500000000000000, -pi/2, pi/2) q_0;",

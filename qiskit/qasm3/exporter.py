@@ -49,7 +49,7 @@ from .grammar import (
     EqualsOperator,
     QuantumArgument,
     Expression,
-    CalibrationGrammarDeclaration,
+    CalibrationDefinition,
 )
 
 
@@ -144,6 +144,8 @@ class GlobalNamespace(MutableMapping):
         return item in self.__dict__
 
     def exists(self, instruction):
+        if isinstance(instruction, UGate):
+            return True
         if type(instruction) in [Gate, Instruction]:  # user-defined instructions/gate
             return self.get(instruction.name, None) == instruction
         return instruction.name in self and isinstance(instruction, type(self[instruction.name]))
@@ -262,7 +264,8 @@ class Qasm3Builder:
 
     def build_opaquedefinition(self, instruction):
         name = self.global_namespace[instruction]
-        return CalibrationGrammarDeclaration(Identifier(name))
+        quantumArgumentList = [ Identifier(f'q_{n}') for n in range(instruction.num_qubits)]
+        return CalibrationDefinition(Identifier(name), quantumArgumentList)
 
     def build_subroutinedefinition(self, instruction):
         name = self.global_namespace[instruction]
