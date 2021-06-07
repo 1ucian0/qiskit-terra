@@ -18,7 +18,7 @@ from collections.abc import MutableMapping
 
 from qiskit.circuit.tools import pi_check
 from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction
-from qiskit.circuit.library.standard_gates import CXGate, UGate, XGate, HGate
+from qiskit.circuit.library.standard_gates import CXGate, UGate, XGate, HGate, CHGate
 from qiskit.circuit.bit import Bit
 from .grammar import (
     Program,
@@ -50,6 +50,7 @@ from .grammar import (
     QuantumArgument,
     Expression,
     CalibrationDefinition,
+    Input,
 )
 
 
@@ -106,7 +107,7 @@ class GlobalNamespace(MutableMapping):
             # "crx",
             # "cry",
             # "crz",
-            # "ch",
+            "ch": CHGate(),
             # "swap",
             # "ccx",
             # "cswap",
@@ -193,7 +194,9 @@ class Qasm3Builder:
 
     def hoist_declarations(self, instructions):
         for instruction in instructions:
-            if self.global_namespace.exists(instruction[0]) or isinstance(instruction[0], self.builtins):
+            if self.global_namespace.exists(instruction[0]) or isinstance(
+                instruction[0], self.builtins
+            ):
                 continue
             if instruction[0].definition is None:
                 self._register_opaque(instruction[0])
@@ -231,6 +234,7 @@ class Qasm3Builder:
             ;
         """
         definitions = self.build_definitions()
+        inputs = self.build_inputs()
         bitdeclarations = self.build_bitdeclarations()
         quantumdeclarations = self.build_quantumdeclarations()
         quantuminstructions = self.build_quantuminstructions(self.quantumcircuit.data)
@@ -238,6 +242,8 @@ class Qasm3Builder:
         ret = []
         if definitions:
             ret += definitions
+        if inputs:
+            ret += inputs
         if bitdeclarations:
             ret += bitdeclarations
         if quantumdeclarations:
@@ -264,7 +270,7 @@ class Qasm3Builder:
 
     def build_opaquedefinition(self, instruction):
         name = self.global_namespace[instruction]
-        quantumArgumentList = [ Identifier(f'q_{n}') for n in range(instruction.num_qubits)]
+        quantumArgumentList = [Identifier(f"q_{n}") for n in range(instruction.num_qubits)]
         return CalibrationDefinition(Identifier(name), quantumArgumentList)
 
     def build_subroutinedefinition(self, instruction):
@@ -286,12 +292,12 @@ class Qasm3Builder:
 
     def build_quantumGateSignature(self, gate):
         name = self.global_namespace[gate]
-
-        # Dummy parameters
         params = []
-        for num in range(len(gate.params)):
+        # Dummy parameters
+        for num in range(len(gate.params) - len(gate.definition.parameters)):
             param_name = f"param_{num}"
             params.append(Identifier(param_name))
+        params += [Identifier(param.name) for param in gate.definition.parameters]
 
         qargList = []
         for qreg in gate.definition.qregs:
@@ -300,6 +306,12 @@ class Qasm3Builder:
                 qargList.append(Identifier(qubit_name))
 
         return QuantumGateSignature(Identifier(name), qargList, params or None)
+
+    def build_inputs(self):
+        ret = []
+        for param in self.quantumcircuit.parameters:
+            ret.append(Input(Identifier("float[32]"), Identifier(param.name)))
+        return ret
 
     def build_bitdeclarations(self):
         ret = []
@@ -371,7 +383,9 @@ class Qasm3Builder:
     def build_quantumgatecall(self, instruction):
         quantumGateName = Identifier(self.global_namespace[instruction[0]])
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
-        expressionList = [Expression(pi_check(param, output="qasm")) for param in instruction[0].params]
+        expressionList = [
+            Expression(pi_check(param, output="qasm")) for param in instruction[0].params
+        ]
 
         return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
 
