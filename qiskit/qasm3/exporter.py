@@ -85,43 +85,44 @@ class Exporter:
 
 
 class GlobalNamespace(MutableMapping):
+    qiskit_gates = {
+        # "p",
+        "x": XGate,
+        # "y",
+        # "z",
+        "h": HGate,
+        # "s",
+        # "sdg",
+        # "t",
+        # "tdg",
+        # "sx",
+        # "rx",
+        # "ry",
+        # "rz",
+        "cx": CXGate,
+        # "cy",
+        # "cz",
+        # "cp",
+        # "crx",
+        # "cry",
+        # "crz",
+        "ch": CHGate,
+        # "swap",
+        # "ccx",
+        # "cswap",
+        # "cu",
+        # # "CX",
+        # "phase",
+        # "cphase",
+        # "id",
+        # "u1",
+        # "u2",
+        # "u3",
+    }
     def __init__(self, includelist):
-        included_gates = {  # TODO make the list based on the includelist
-            # "p",
-            "x": XGate(),
-            # "y",
-            # "z",
-            "h": HGate(),
-            # "s",
-            # "sdg",
-            # "t",
-            # "tdg",
-            # "sx",
-            # "rx",
-            # "ry",
-            # "rz",
-            "cx": CXGate(),
-            # "cy",
-            # "cz",
-            # "cp",
-            # "crx",
-            # "cry",
-            # "crz",
-            "ch": CHGate(),
-            # "swap",
-            # "ccx",
-            # "cswap",
-            # "cu",
-            # # "CX",
-            # "phase",
-            # "cphase",
-            # "id",
-            # "u1",
-            # "u2",
-            # "u3",
-        }
-        for name, instance in included_gates.items():
-            self[name] = instance
+
+        for name, instance in self.qiskit_gates.items():
+            self[name] = instance()
 
     def __setitem__(self, name_str, instruction):
         self.__dict__[name_str] = instruction
@@ -139,7 +140,7 @@ class GlobalNamespace(MutableMapping):
         return iter(self.__dict__)
 
     def __len__(self):
-        return len(self.__dict__) / 2
+        return len(self.__dict__) // 2
 
     def __contains__(self, item):
         return item in self.__dict__

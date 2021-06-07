@@ -242,7 +242,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                f"def my_gate qubit q_0 {{",
+                "def my_gate qubit q_0 {",
                 "h q_0;",
                 "return;",
                 "}",

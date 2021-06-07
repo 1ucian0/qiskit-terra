@@ -10,7 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name, abstract-method
 
 
 class Class:
@@ -257,15 +257,16 @@ class QuantumGateCall(QuantumInstruction):
         self.quantumGateModifier = quantumGateModifier
 
     def qasm(self):
+        name = self.quantumGateName.qasm()
         if self.expressionList:
             return (
-                f"{self.quantumGateName.qasm()}"
+                f"{name}"
                 f"({', '.join([e.qasm() for e in self.expressionList])}) "
                 f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
             )
 
         return (
-            f"{self.quantumGateName.qasm()} "
+            f"{name} "
             f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
         )
 
@@ -313,10 +314,6 @@ class QuantumBarrier(QuantumInstruction):
         return [f'barrier {", ".join([i.qasm() for i in self.indexIdentifierList])};\n']
 
 
-class BooleanExpression(Class):
-    pass
-
-
 class ProgramBlock(Class):
     """
     programBlock
@@ -343,7 +340,7 @@ class ReturnStatement(Class):  # TODO probably should be a subclass of ControlDi
     def qasm(self):
         if self.expression:
             return [f"return {self.expression.qasm()};\n"]
-        return [f"return;\n"]
+        return ["return;\n"]
 
 
 class QuantumBlock(ProgramBlock):
@@ -362,7 +359,7 @@ class SubroutineBlock(ProgramBlock):
     """
 
     def __init__(self, statements: [Statement], returnStatement: ReturnStatement = None):
-        super(SubroutineBlock, self).__init__(statements + [returnStatement])
+        super().__init__(statements + [returnStatement])
 
 
 class QuantumArgument(QuantumDeclaration):
@@ -477,32 +474,34 @@ class CalibrationDefinition(Statement):
 
         return [f"defcal {name} {identifierList}{calibrationArgumentList}"] + block + ["\n"]
 
-
 class BooleanExpression(Class):
     """
     programBlock
         : statement | controlDirective
         | LBRACE(statement | controlDirective) * RBRACE
     """
-
-    pass
-
+    def qasm(self):
+        pass
 
 class RelationalOperator(Class):
-    pass
-
+    """Relational operator"""
+    def qasm(self):
+        raise NotImplementedError
 
 class LtOperator(RelationalOperator):
+    """Less than relational operator"""
     def qasm(self):
         return ">"
 
 
 class EqualsOperator(RelationalOperator):
+    """Greater than relational operator"""
     def qasm(self):
         return "=="
 
 
 class GtOperator(RelationalOperator):
+    """Greater than relational operator"""
     def qasm(self):
         return "<"
 
@@ -547,6 +546,7 @@ class BranchingStatement(Statement):
 
 
 class Input(Class):
+    """UNDEFINED in the grammar yet"""
     def __init__(self, input_type, input_variable):
         self.type = input_type
         self.variable = input_variable
