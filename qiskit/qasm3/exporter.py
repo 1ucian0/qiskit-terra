@@ -64,9 +64,10 @@ class Exporter:
         includes=None,  # list[filename:str]
     ):
         self.quantumcircuit = quantumcircuit
+        if includes is None:
+            self.includes = ['stdgates.inc']
         if isinstance(includes, str):
-            includes = [includes]
-        self.includes = includes or []
+            self.includes = [includes]
 
     def requiered_includes(self):
         return []  # TODO
