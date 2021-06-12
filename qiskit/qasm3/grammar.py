@@ -17,6 +17,7 @@
 
 class Class:
     """Base abstract class for AST notes"""
+
     def qasm(self):
         """Unparses the node"""
         raise NotImplementedError(self)
@@ -34,6 +35,7 @@ class Statement(Class):
         | aliasStatement
         | quantumStatement
     """
+
     pass
 
 
@@ -42,6 +44,7 @@ class Pragma(Class):
     pragma
         : '#pragma' LBRACE statement* RBRACE  // match any valid openqasm statement
     """
+
     def __init__(self, content):
         self.content = content
 
@@ -54,6 +57,7 @@ class CalibrationGrammarDeclaration(Statement):
     calibrationGrammarDeclaration
         : 'defcalgrammar' calibrationGrammar SEMICOLON
     """
+
     def __init__(self, name):
         self.name = name
 
@@ -66,6 +70,7 @@ class Program(Class):
     program
         : header (globalStatement | statement)*
     """
+
     def __init__(self, header, statements=None):
         self.header = header
         self.statements = statements or []
@@ -82,6 +87,7 @@ class Header(Class):
     header
         : version? include*
     """
+
     def __init__(self, version, includes):
         self.version = version
         self.includes = includes
@@ -98,6 +104,7 @@ class Include(Class):
     include
         : 'include' StringLiteral SEMICOLON
     """
+
     def __init__(self, filename):
         self.filename = filename
 
@@ -110,6 +117,7 @@ class Version(Class):
     version
         : 'OPENQASM'(Integer | RealNumber) SEMICOLON
     """
+
     def __init__(self, version_number):
         self.version_number = version_number
 
@@ -126,6 +134,7 @@ class QuantumInstruction(Class):
         | quantumReset
         | quantumBarrier
     """
+
     def __init__(self):
         pass
 
@@ -137,6 +146,7 @@ class Identifier(Class):
     """
     Identifier : FirstIdCharacter GeneralIdCharacter* ;
     """
+
     def __init__(self, string):
         self.string = string
 
@@ -237,11 +247,13 @@ class ExpressionTerminator(Expression):
         | expressionTerminator LBRACKET expression RBRACKET
         | expressionTerminator incrementor
     """
+
     pass
 
 
 class Integer(Expression):
     """Integer : Digit+ ;"""
+
     pass
 
 
@@ -250,6 +262,7 @@ class Designator(Class):
     designator
         : LBRACKET expression RBRACKET
     """
+
     def __init__(self, expression: Expression):
         self.expression = expression
 
@@ -263,6 +276,7 @@ class BitDeclaration(Class):
         : ( 'creg' Identifier designator? |   # NOT SUPPORTED
             'bit' designator? Identifier ) equalsExpression?
     """
+
     def __init__(self, identifier: Identifier, designator=None, equalsExpression=None):
         self.identifier = identifier
         self.designator = designator
@@ -488,6 +502,7 @@ class CalibrationArgument(Class):
     calibrationArgumentList
         : classicalArgumentList | expressionList
     """
+
     pass
 
 

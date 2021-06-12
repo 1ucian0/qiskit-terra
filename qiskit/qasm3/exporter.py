@@ -123,6 +123,7 @@ class Exporter:
 
 class GlobalNamespace:
     """Global namespace dict-like."""
+
     qiskit_gates = {
         "p": PhaseGate,
         "x": XGate,
@@ -215,6 +216,7 @@ class GlobalNamespace:
 
 class Qasm3Builder:
     """QASM3 builder constructs an AST from a QuantumCircuit."""
+
     builtins = (Barrier, Measure)
 
     def __init__(self, quantumcircuit, includeslist):
