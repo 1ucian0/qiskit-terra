@@ -201,8 +201,7 @@ class TestCircuitQasm3(QiskitTestCase):
         self.assertEqual(Exporter(qc).dumps(), expected_qasm)
 
     def test_composite_circuits_with_same_name(self):
-        """Test when multiple composite circuit instructions same name and different implementation
-        """
+        """Test when multiple composite circuit instructions same name and different implementation"""
         my_gate = QuantumCircuit(1, name="my_gate")
         my_gate.h(0)
         my_gate_inst1 = my_gate.to_instruction()

@@ -14,7 +14,6 @@
 
 """QASM3 Exporter"""
 
-from collections.abc import MutableMapping
 from os.path import dirname, join, abspath, exists
 
 from qiskit.circuit.tools import pi_check
@@ -52,7 +51,7 @@ from qiskit.circuit.library.standard_gates import (
     IGate,  # Is this id?
     U1Gate,
     U2Gate,
-    U3Gate
+    U3Gate,
 )
 from qiskit.circuit.bit import Bit
 from .grammar import (
@@ -93,9 +92,9 @@ class Exporter:
     """QASM3 expoter main class."""
 
     def __init__(
-            self,
-            quantumcircuit,  # QuantumCircuit
-            includes=None,  # list[filename:str]
+        self,
+        quantumcircuit,  # QuantumCircuit
+        includes=None,  # list[filename:str]
     ):
         self.quantumcircuit = quantumcircuit
         if includes is None:
@@ -104,61 +103,67 @@ class Exporter:
             self.includes = [includes]
 
     def dumps(self):
+        """Returns the QASM3 string."""
         tree = self.qasm_tree()
-        return self.flatten_tree(tree)
+        return self._flatten_tree(tree)
 
-    def flatten_tree(self, tree):
+    def _flatten_tree(self, tree):
+        """walks the AST to create a single string."""
         ret = ""
         if isinstance(tree, str):
             return tree
         for child in tree:
-            ret += self.flatten_tree(child)
+            ret += self._flatten_tree(child)
         return ret
 
     def qasm_tree(self):
+        """Returns a Qasm3 AST"""
         return Qasm3Builder(self.quantumcircuit, self.includes).build_program().qasm()
 
 
-class GlobalNamespace(MutableMapping):
-    qiskit_gates = {"p": PhaseGate,
-                    "x": XGate,
-                    "y": YGate,
-                    "z": ZGate,
-                    "h": HGate,
-                    "s": SGate,
-                    "sdg": SdgGate,
-                    "t": TGate,
-                    "tdg": TdgGate,
-                    "sx": SXGate,
-                    "rx": RXGate,
-                    "ry": RYGate,
-                    "rz": RZGate,
-                    "cx": CXGate,
-                    "cy": CYGate,
-                    "cz": CZGate,
-                    "cp": CPhaseGate,
-                    "crx": CRXGate,
-                    "cry": CRYGate,
-                    "crz": CRZGate,
-                    "ch": CHGate,
-                    "swap": SwapGate,
-                    "ccx": CCXGate,
-                    "cswap": CSwapGate,
-                    "cu": CUGate,
-                    "CX": CXGate,
-                    "phase": PhaseGate,
-                    "cphase": CPhaseGate,
-                    "id": IGate,
-                    "u1": U1Gate,
-                    "u2": U2Gate,
-                    "u3": U3Gate
-                    }
+class GlobalNamespace:
+    """Global namespace dict-like."""
+    qiskit_gates = {
+        "p": PhaseGate,
+        "x": XGate,
+        "y": YGate,
+        "z": ZGate,
+        "h": HGate,
+        "s": SGate,
+        "sdg": SdgGate,
+        "t": TGate,
+        "tdg": TdgGate,
+        "sx": SXGate,
+        "rx": RXGate,
+        "ry": RYGate,
+        "rz": RZGate,
+        "cx": CXGate,
+        "cy": CYGate,
+        "cz": CZGate,
+        "cp": CPhaseGate,
+        "crx": CRXGate,
+        "cry": CRYGate,
+        "crz": CRZGate,
+        "ch": CHGate,
+        "swap": SwapGate,
+        "ccx": CCXGate,
+        "cswap": CSwapGate,
+        "cu": CUGate,
+        "CX": CXGate,
+        "phase": PhaseGate,
+        "cphase": CPhaseGate,
+        "id": IGate,
+        "u1": U1Gate,
+        "u2": U2Gate,
+        "u3": U3Gate,
+    }
     include_paths = [abspath(join(dirname(__file__), "..", "qasm", "libs"))]
 
     def __init__(self, includelist):
+        self._data = {}
         for includefile in includelist:
             if includefile == "stdgates.inc":
-                self.update(self.qiskit_gates)
+                self._data.update(self.qiskit_gates)
             else:
                 # TODO What do if an inc file is not stanard?
                 # Should it be parsed?
@@ -180,41 +185,36 @@ class GlobalNamespace(MutableMapping):
                 yield full_path
 
     def __setitem__(self, name_str, instruction):
-        self.__dict__[name_str] = instruction
-        self.__dict__[id(instruction)] = name_str
+        self._data[name_str] = instruction
+        self._data[id(instruction)] = name_str
 
     def __getitem__(self, key):
         if isinstance(key, Instruction):
-            return self.__dict__.get(id(key), key.name)
-        return self.__dict__[key]
-
-    def __delitem__(self, key):
-        del self.__dict__[key]
+            return self._data.get(id(key), key.name)
+        return self._data[key]
 
     def __iter__(self):
-        return iter(self.__dict__)
+        return iter(self._data)
 
-    def __len__(self):
-        return len(self.__dict__) // 2
-
-    def __contains__(self, item):
-        return item in self.__dict__
-
-    def exists(self, instruction):
+    def __contains__(self, instruction):
         if isinstance(instruction, UGate):
             return True
         if type(instruction) in [Gate, Instruction]:  # user-defined instructions/gate
-            return self.get(instruction.name, None) == instruction
-        return instruction.name in self and isinstance(instruction, self[instruction.name])
+            return self._data.get(instruction.name, None) == instruction
+        return instruction.name in self._data and isinstance(
+            instruction, self._data[instruction.name]
+        )
 
     def register(self, instruction):
-        if instruction.name in self.__dict__:
+        """Register an instruction in the namespace"""
+        if instruction.name in self._data:
             self[f"{instruction.name}_{id(instruction)}"] = instruction
         else:
             self[instruction.name] = instruction
 
 
 class Qasm3Builder:
+    """QASM3 builder constructs an AST from a QuantumCircuit."""
     builtins = (Barrier, Measure)
 
     def __init__(self, quantumcircuit, includeslist):
@@ -235,24 +235,25 @@ class Qasm3Builder:
         self._subroutine_to_declare[id(instruction)] = instruction
 
     def _register_opaque(self, instruction):
-        if not self.global_namespace.exists(instruction):
+        if instruction not in self.global_namespace:
             self.global_namespace.register(instruction)
             self._opaque_to_declare[id(instruction)] = instruction
 
     def build_header(self):
+        """Builds a Header"""
         version = Version("3")
         includes = self.build_includes()
         return Header(version, includes)
 
     def build_program(self):
+        """Builds a Program"""
         self.hoist_declarations(self.quantumcircuit.data)
         return Program(self.build_header(), self.build_globalstatements())
 
     def hoist_declarations(self, instructions):
+        """Walks the definitions in gates/instructions to make a list of gates to declare."""
         for instruction in instructions:
-            if self.global_namespace.exists(instruction[0]) or isinstance(
-                    instruction[0], self.builtins
-            ):
+            if instruction[0] in self.global_namespace or isinstance(instruction[0], self.builtins):
                 continue
             if instruction[0].definition is None:
                 self._register_opaque(instruction[0])
@@ -264,6 +265,7 @@ class Qasm3Builder:
                     self._register_subroutine(instruction[0])
 
     def build_includes(self):
+        """Builds a list of included files."""
         return [Include(filename) for filename in self.includeslist]
 
     def build_globalstatements(self) -> [Statement]:
@@ -308,6 +310,7 @@ class Qasm3Builder:
         return ret
 
     def build_definitions(self):
+        """Builds all the definition."""
         ret = []
         for instruction in self._opaque_to_declare.values():
             ret.append(self.build_definition(instruction, self.build_opaquedefinition))
@@ -318,17 +321,20 @@ class Qasm3Builder:
         return ret
 
     def build_definition(self, instruction, builder):
+        """Using a given definition builder, builds that definition."""
         self._flat_reg = True
         definition = builder(instruction)
         self._flat_reg = False
         return definition
 
     def build_opaquedefinition(self, instruction):
+        """Builds an Opaque gate definition as a CalibrationDefinition"""
         name = self.global_namespace[instruction]
         quantumArgumentList = [Identifier(f"q_{n}") for n in range(instruction.num_qubits)]
         return CalibrationDefinition(Identifier(name), quantumArgumentList)
 
     def build_subroutinedefinition(self, instruction):
+        """Builds a SubroutineDefinition"""
         name = self.global_namespace[instruction]
         quantumArgumentList = self.build_quantumArgumentList(instruction.definition.qregs)
         subroutineBlock = SubroutineBlock(
@@ -337,15 +343,13 @@ class Qasm3Builder:
         return SubroutineDefinition(Identifier(name), subroutineBlock, quantumArgumentList)
 
     def build_quantumgatedefinition(self, gate):
+        """Builds a QuantumGateDefinition"""
         quantumGateSignature = self.build_quantumGateSignature(gate)
-
-        # quantumGateSignature = self.build_quantumGateSignature(name,
-        #                                                        gate_parameters,
-        #                                                        gate.definition.qregs)
         quantumBlock = QuantumBlock(self.build_quantuminstructions(gate.definition.data))
         return QuantumGateDefinition(quantumGateSignature, quantumBlock)
 
     def build_quantumGateSignature(self, gate):
+        """Builds a QuantumGateSignature"""
         name = self.global_namespace[gate]
         params = []
         # Dummy parameters
@@ -363,24 +367,28 @@ class Qasm3Builder:
         return QuantumGateSignature(Identifier(name), qargList, params or None)
 
     def build_inputs(self):
+        """Builds a list of Inputs"""
         ret = []
         for param in self.quantumcircuit.parameters:
             ret.append(Input(Identifier("float[32]"), Identifier(param.name)))
         return ret
 
     def build_bitdeclarations(self):
+        """Builds a list of BitDeclarations"""
         ret = []
         for creg in self.quantumcircuit.cregs:
             ret.append(BitDeclaration(Identifier(creg.name), Designator(Integer(creg.size))))
         return ret
 
     def build_quantumdeclarations(self):
+        """Builds a list of QuantumDeclaration"""
         ret = []
         for qreg in self.quantumcircuit.qregs:
             ret.append(QuantumDeclaration(Identifier(qreg.name), Designator(Integer(qreg.size))))
         return ret
 
     def build_quantuminstructions(self, instructions):
+        """Builds a list of call statements"""
         ret = []
         for instruction in instructions:
             if isinstance(instruction[0], Gate):
@@ -408,6 +416,7 @@ class Qasm3Builder:
         return ret
 
     def build_programblock(self, instructions):
+        """Builds a ProgramBlock"""
         return ProgramBlock(self.build_quantuminstructions(instructions))
 
     def build_eqcondition(self, condition):
@@ -417,6 +426,7 @@ class Qasm3Builder:
         )
 
     def build_quantumArgumentList(self, qregs: [QuantumRegister]):
+        """Builds a quantumArgumentList"""
         quantumArgumentList = []
         for qreg in qregs:
             if self._flat_reg:
@@ -430,12 +440,14 @@ class Qasm3Builder:
         return quantumArgumentList
 
     def build_indexIdentifierlist(self, bitlist: [Bit]):
+        """Builds a indexIdentifierList"""
         indexIdentifierList = []
         for bit in bitlist:
             indexIdentifierList.append(self.build_indexidentifier(bit))
         return indexIdentifierList
 
     def build_quantumgatecall(self, instruction):
+        """Builds a QuantumGateCall"""
         if isinstance(instruction[0], UGate):
             quantumGateName = Identifier("U")
         else:
@@ -447,6 +459,7 @@ class Qasm3Builder:
         return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
 
     def build_subroutinecall(self, instruction):
+        """Builds a SubroutineCall"""
         identifier = Identifier(self.global_namespace[instruction[0]])
         expressionList = [Expression(param) for param in instruction[0].params]
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
@@ -454,6 +467,7 @@ class Qasm3Builder:
         return SubroutineCall(identifier, indexIdentifierList, expressionList)
 
     def build_indexidentifier(self, bit: Bit):
+        """Build a IndexIdentifier2"""
         if self._flat_reg:
             bit_name = f"{bit.register.name}_{bit.index}"
             return IndexIdentifier2(Identifier(bit_name))

@@ -10,19 +10,38 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-# pylint: disable=invalid-name, abstract-method
+# pylint: disable=invalid-name, abstract-method, super-init-not-called
+
+"""QASM3 AST Nodes"""
 
 
 class Class:
+    """Base abstract class for AST notes"""
     def qasm(self):
+        """Unparses the node"""
         raise NotImplementedError(self)
 
 
 class Statement(Class):
+    """
+    statement
+        : expressionStatement
+        | assignmentStatement
+        | classicalDeclarationStatement
+        | branchingStatement
+        | loopStatement
+        | endStatement
+        | aliasStatement
+        | quantumStatement
+    """
     pass
 
 
 class Pragma(Class):
+    """
+    pragma
+        : '#pragma' LBRACE statement* RBRACE  // match any valid openqasm statement
+    """
     def __init__(self, content):
         self.content = content
 
@@ -31,6 +50,10 @@ class Pragma(Class):
 
 
 class CalibrationGrammarDeclaration(Statement):
+    """
+    calibrationGrammarDeclaration
+        : 'defcalgrammar' calibrationGrammar SEMICOLON
+    """
     def __init__(self, name):
         self.name = name
 
@@ -39,6 +62,10 @@ class CalibrationGrammarDeclaration(Statement):
 
 
 class Program(Class):
+    """
+    program
+        : header (globalStatement | statement)*
+    """
     def __init__(self, header, statements=None):
         self.header = header
         self.statements = statements or []
@@ -51,6 +78,10 @@ class Program(Class):
 
 
 class Header(Class):
+    """
+    header
+        : version? include*
+    """
     def __init__(self, version, includes):
         self.version = version
         self.includes = includes
@@ -63,11 +94,11 @@ class Header(Class):
 
 
 class Include(Class):
+    """
+    include
+        : 'include' StringLiteral SEMICOLON
+    """
     def __init__(self, filename):
-        """
-        include
-            : 'include' StringLiteral SEMICOLON
-        """
         self.filename = filename
 
     def qasm(self):
@@ -75,11 +106,11 @@ class Include(Class):
 
 
 class Version(Class):
+    """
+    version
+        : 'OPENQASM'(Integer | RealNumber) SEMICOLON
+    """
     def __init__(self, version_number):
-        """
-        version
-            : 'OPENQASM'(Integer | RealNumber) SEMICOLON
-        """
         self.version_number = version_number
 
     def qasm(self):
@@ -87,15 +118,15 @@ class Version(Class):
 
 
 class QuantumInstruction(Class):
+    """
+    quantumInstruction
+        : quantumGateCall
+        | quantumPhase
+        | quantumMeasurement
+        | quantumReset
+        | quantumBarrier
+    """
     def __init__(self):
-        """
-        quantumInstruction
-            : quantumGateCall
-            | quantumPhase
-            | quantumMeasurement
-            | quantumReset
-            | quantumBarrier
-        """
         pass
 
     def qasm(self):
@@ -103,10 +134,10 @@ class QuantumInstruction(Class):
 
 
 class Identifier(Class):
+    """
+    Identifier : FirstIdCharacter GeneralIdCharacter* ;
+    """
     def __init__(self, string):
-        """
-        Identifier : FirstIdCharacter GeneralIdCharacter* ;
-        """
         self.string = string
 
     def qasm(self):
@@ -190,19 +221,36 @@ class QuantumMeasurementAssignment(Statement):
 
 
 class ExpressionTerminator(Expression):
+    """
+    expressionTerminator
+        : Constant
+        | Integer
+        | RealNumber
+        | booleanLiteral
+        | Identifier
+        | StringLiteral
+        | builtInCall
+        | kernelCall
+        | subroutineCall
+        | timingTerminator
+        | LPAREN expression RPAREN
+        | expressionTerminator LBRACKET expression RBRACKET
+        | expressionTerminator incrementor
+    """
     pass
 
 
 class Integer(Expression):
+    """Integer : Digit+ ;"""
     pass
 
 
 class Designator(Class):
+    """
+    designator
+        : LBRACKET expression RBRACKET
+    """
     def __init__(self, expression: Expression):
-        """
-        designator
-            : LBRACKET expression RBRACKET
-        """
         self.expression = expression
 
     def qasm(self):
@@ -210,12 +258,12 @@ class Designator(Class):
 
 
 class BitDeclaration(Class):
+    """
+    bitDeclaration
+        : ( 'creg' Identifier designator? |   # NOT SUPPORTED
+            'bit' designator? Identifier ) equalsExpression?
+    """
     def __init__(self, identifier: Identifier, designator=None, equalsExpression=None):
-        """
-        bitDeclaration
-            : ( 'creg' Identifier designator? |   # NOT SUPPORTED
-                'bit' designator? Identifier ) equalsExpression?
-        """
         self.identifier = identifier
         self.designator = designator
         self.equalsExpression = equalsExpression
@@ -225,12 +273,13 @@ class BitDeclaration(Class):
 
 
 class QuantumDeclaration(Class):
+    """
+    quantumDeclaration
+        : 'qreg' Identifier designator? |   # NOT SUPPORTED
+         'qubit' designator? Identifier
+    """
+
     def __init__(self, identifier: Identifier, designator=None):
-        """
-        quantumDeclaration
-            : 'qreg' Identifier designator? |   # NOT SUPPORTED
-             'qubit' designator? Identifier
-        """
         self.identifier = identifier
         self.designator = designator
 
@@ -248,7 +297,7 @@ class QuantumGateCall(QuantumInstruction):
         self,
         quantumGateName: Identifier,
         indexIdentifierList: [Identifier],
-        expressionList=[Expression],
+        expressionList: [Expression] = None,
         quantumGateModifier=None,
     ):
         self.quantumGateName = quantumGateName
@@ -265,10 +314,7 @@ class QuantumGateCall(QuantumInstruction):
                 f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
             )
 
-        return (
-            f"{name} "
-            f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
-        )
+        return f"{name} " f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
 
 
 class SubroutineCall(ExpressionTerminator):
@@ -438,6 +484,10 @@ class SubroutineDefinition(Statement):
 
 
 class CalibrationArgument(Class):
+    """
+    calibrationArgumentList
+        : classicalArgumentList | expressionList
+    """
     pass
 
 
@@ -474,34 +524,42 @@ class CalibrationDefinition(Statement):
 
         return [f"defcal {name} {identifierList}{calibrationArgumentList}"] + block + ["\n"]
 
+
 class BooleanExpression(Class):
     """
     programBlock
         : statement | controlDirective
         | LBRACE(statement | controlDirective) * RBRACE
     """
+
     def qasm(self):
         pass
 
+
 class RelationalOperator(Class):
     """Relational operator"""
+
     def qasm(self):
         raise NotImplementedError
 
+
 class LtOperator(RelationalOperator):
     """Less than relational operator"""
+
     def qasm(self):
         return ">"
 
 
 class EqualsOperator(RelationalOperator):
     """Greater than relational operator"""
+
     def qasm(self):
         return "=="
 
 
 class GtOperator(RelationalOperator):
     """Greater than relational operator"""
+
     def qasm(self):
         return "<"
 
@@ -547,6 +605,7 @@ class BranchingStatement(Statement):
 
 class Input(Class):
     """UNDEFINED in the grammar yet"""
+
     def __init__(self, input_type, input_variable):
         self.type = input_type
         self.variable = input_variable
