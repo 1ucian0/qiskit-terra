@@ -19,7 +19,41 @@ from os.path import dirname, join, abspath, exists
 
 from qiskit.circuit.tools import pi_check
 from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction
-from qiskit.circuit.library.standard_gates import CXGate, UGate, XGate, HGate, CHGate
+from qiskit.circuit.library.standard_gates import (
+    UGate,
+    PhaseGate,
+    XGate,
+    YGate,
+    ZGate,
+    HGate,
+    SGate,
+    SdgGate,
+    TGate,
+    TdgGate,
+    SXGate,
+    RXGate,
+    RYGate,
+    RZGate,
+    CXGate,
+    CYGate,
+    CZGate,
+    CPhaseGate,
+    CRXGate,
+    CRYGate,
+    CRZGate,
+    CHGate,
+    SwapGate,
+    CCXGate,
+    CSwapGate,
+    CUGate,
+    # CXGate Again
+    # PhaseGate Again,
+    # CPhaseGate Again,
+    IGate,  # Is this id?
+    U1Gate,
+    U2Gate,
+    U3Gate
+)
 from qiskit.circuit.bit import Bit
 from .grammar import (
     Program,
@@ -59,18 +93,15 @@ class Exporter:
     """QASM3 expoter main class."""
 
     def __init__(
-        self,
-        quantumcircuit,  # QuantumCircuit
-        includes=None,  # list[filename:str]
+            self,
+            quantumcircuit,  # QuantumCircuit
+            includes=None,  # list[filename:str]
     ):
         self.quantumcircuit = quantumcircuit
         if includes is None:
-            self.includes = ['stdgates.inc']
+            self.includes = ["stdgates.inc"]
         if isinstance(includes, str):
             self.includes = [includes]
-
-    def requiered_includes(self):
-        return []  # TODO
 
     def dumps(self):
         tree = self.qasm_tree()
@@ -89,29 +120,57 @@ class Exporter:
 
 
 class GlobalNamespace(MutableMapping):
-    qiskit_gates = {
-        "x": XGate,
-        "h": HGate,
-        "cx": CXGate,
-        "ch": CHGate,
-    }
+    qiskit_gates = {"p": PhaseGate,
+                    "x": XGate,
+                    "y": YGate,
+                    "z": ZGate,
+                    "h": HGate,
+                    "s": SGate,
+                    "sdg": SdgGate,
+                    "t": TGate,
+                    "tdg": TdgGate,
+                    "sx": SXGate,
+                    "rx": RXGate,
+                    "ry": RYGate,
+                    "rz": RZGate,
+                    "cx": CXGate,
+                    "cy": CYGate,
+                    "cz": CZGate,
+                    "cp": CPhaseGate,
+                    "crx": CRXGate,
+                    "cry": CRYGate,
+                    "crz": CRZGate,
+                    "ch": CHGate,
+                    "swap": SwapGate,
+                    "ccx": CCXGate,
+                    "cswap": CSwapGate,
+                    "cu": CUGate,
+                    "CX": CXGate,
+                    "phase": PhaseGate,
+                    "cphase": CPhaseGate,
+                    "id": IGate,
+                    "u1": U1Gate,
+                    "u2": U2Gate,
+                    "u3": U3Gate
+                    }
     include_paths = [abspath(join(dirname(__file__), "..", "qasm", "libs"))]
 
     def __init__(self, includelist):
-        included_gates = []
         for includefile in includelist:
-            included_gates += self._extract_gates_from_file(includefile)
-        for name in included_gates:
-            if name in self.qiskit_gates:
-                self[name] = self.qiskit_gates[name]()
+            if includefile == "stdgates.inc":
+                self.update(self.qiskit_gates)
+            else:
+                # TODO What do if an inc file is not stanard?
+                # Should it be parsed?
+                pass
 
     def _extract_gates_from_file(self, filename):
         gates = set()
         for filepath in self._find_lib(filename):
             with open(filepath) as fp:
-                for line in  fp.readlines():
-                    if line.startswith('gate '):
-                        gates.add(line[5:].split('(')[0].split()[0])
+                for line in fp.readlines():
+                    if line.startswith("gate "):
+                        gates.add(line[5:].split("(")[0].split()[0])
         return gates
 
     def _find_lib(self, filename):
@@ -146,7 +205,7 @@ class GlobalNamespace(MutableMapping):
             return True
         if type(instruction) in [Gate, Instruction]:  # user-defined instructions/gate
             return self.get(instruction.name, None) == instruction
-        return instruction.name in self and isinstance(instruction, type(self[instruction.name]))
+        return instruction.name in self and isinstance(instruction, self[instruction.name])
 
     def register(self, instruction):
         if instruction.name in self.__dict__:
@@ -192,7 +251,7 @@ class Qasm3Builder:
     def hoist_declarations(self, instructions):
         for instruction in instructions:
             if self.global_namespace.exists(instruction[0]) or isinstance(
-                instruction[0], self.builtins
+                    instruction[0], self.builtins
             ):
                 continue
             if instruction[0].definition is None:
@@ -378,11 +437,13 @@ class Qasm3Builder:
 
     def build_quantumgatecall(self, instruction):
         if isinstance(instruction[0], UGate):
-            quantumGateName = Identifier('U')
+            quantumGateName = Identifier("U")
         else:
             quantumGateName = Identifier(self.global_namespace[instruction[0]])
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
-        expressionList = [Expression(pi_check(param, output="qasm")) for param in instruction[0].params]
+        expressionList = [
+            Expression(pi_check(param, output="qasm")) for param in instruction[0].params
+        ]
         return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
 
     def build_subroutinecall(self, instruction):
