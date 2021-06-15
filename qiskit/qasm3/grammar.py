@@ -109,7 +109,7 @@ class Include(Class):
         self.filename = filename
 
     def qasm(self):
-        return [f"include {self.filename};\n"]
+        return [f"include \"{self.filename}\";\n"]
 
 
 class Version(Class):
