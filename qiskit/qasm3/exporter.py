@@ -17,7 +17,7 @@
 from os.path import dirname, join, abspath, exists
 
 from qiskit.circuit.tools import pi_check
-from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction
+from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction, ClassicalRegister
 from qiskit.circuit.library.standard_gates import (
     UGate,
     PhaseGate,
@@ -423,9 +423,11 @@ class Qasm3Builder:
 
     def build_eqcondition(self, condition):
         """Classical Conditional condition from a instruction.condition"""
-        return ComparisonExpression(
-            Identifier(condition[0].name), EqualsOperator(), Integer(condition[1])
-        )
+        if isinstance(condition[0], ClassicalRegister):
+            classical_conditionant = Identifier(condition[0].name)
+        else:
+            classical_conditionant = self.build_indexidentifier(condition[0])
+        return ComparisonExpression(classical_conditionant, EqualsOperator(), Integer(condition[1]))
 
     def build_quantumArgumentList(self, qregs: [QuantumRegister]):
         """Builds a quantumArgumentList"""
