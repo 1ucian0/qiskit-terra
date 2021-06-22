@@ -46,7 +46,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 "bit[3] cr;",
                 "qubit[1] qr1;",
                 "qubit[2] qr2;",
@@ -97,7 +97,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 "def composite_circ qubit q_0, qubit q_1 {",
                 "h q_0;",
                 "x q_1;",
@@ -138,7 +138,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 "gate composite_circ q_0, q_1 {",
                 "h q_0;",
                 "x q_1;",
@@ -179,7 +179,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 "def composite_circ qubit q_0, qubit q_1 {",
                 "h q_0;",
                 "x q_1;",
@@ -224,7 +224,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 "def my_gate qubit q_0 {",
                 "h q_0;",
                 "return;",
@@ -254,7 +254,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 "qubit[2] q;",
                 "U(2*pi, 3*pi, -5*pi) q[0];",
                 "",
@@ -280,7 +280,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 f"gate nG0(param_0) {definition_qubit_name}_0 {{",
                 f"h {definition_qubit_name}_0;",
                 "}",
@@ -307,7 +307,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 "gate custom q_0 {",
                 "rx(0.500000000000000) q_0;",
                 "}",
@@ -340,7 +340,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 f"gate nG0(param_0, param_1) {qubit_name}_0, {qubit_name}_1 {{",
                 f"h {qubit_name}_0;",
                 f"h {qubit_name}_1;",
@@ -363,7 +363,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 "input float[32] θ;",
                 "qubit[1] q;",
                 "rz(θ) q[0];",
@@ -380,7 +380,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 "gate ch_o0 q_0, q_1 {",
                 "x q_0;",
                 "ch q_0, q_1;",
@@ -406,50 +406,12 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "include \"stdgates.inc\";",
+                "include stdgates.inc;",
                 f"gate cx_{custom_gate_id} q_0, q_1 {{",
                 "cx q_0, q_1;",
                 "}",
                 "qubit[2] q;",
                 f"cx_{custom_gate_id} q[0], q[1];",
-                "",
-            ]
-        )
-        self.assertEqual(Exporter(qc).dumps(), expected_qasm)
-
-    def test_teleportation(self):
-        qc = QuantumCircuit(3, 2)
-        qc.h(1)
-        qc.cx(1, 2)
-        qc.barrier()
-        qc.cx(0, 1)
-        qc.h(0)
-        qc.barrier()
-        qc.measure([0, 1], [0, 1])
-        qc.barrier()
-        qc.x(2).c_if(qc.clbits[1], 1)
-        qc.z(2).c_if(qc.clbits[0], 1)
-        expected_qasm = "\n".join(
-            [
-                "OPENQASM 3;",
-                "include \"stdgates.inc\";",
-                "bit[2] c;",
-                "qubit[3] q;",
-                "h q[1];",
-                "cx q[1], q[2];",
-                "barrier q[0], q[1], q[2];",
-                "cx q[0], q[1];",
-                "h q[0];",
-                "barrier q[0], q[1], q[2];",
-                "c[0] = measure q[0];",
-                "c[1] = measure q[1];",
-                "barrier q[0], q[1], q[2];",
-                "if (c[1] == True){",
-                "x q[2];",
-                "}",
-                "if (c[0] == True){",
-                "z q[2];",
-                "}",
                 "",
             ]
         )

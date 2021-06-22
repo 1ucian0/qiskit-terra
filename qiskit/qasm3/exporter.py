@@ -17,7 +17,7 @@
 from os.path import dirname, join, abspath, exists
 
 from qiskit.circuit.tools import pi_check
-from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction, ClassicalRegister
+from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction
 from qiskit.circuit.library.standard_gates import (
     UGate,
     PhaseGate,
@@ -220,7 +220,7 @@ class Qasm3Builder:
     builtins = (Barrier, Measure)
 
     def __init__(self, quantumcircuit, includeslist):
-        self.quantumcircuit = quantumcircuit
+        self.circuit_ctx = [quantumcircuit]
         self.includeslist = includeslist
         self._gate_to_declare = {}
         self._subroutine_to_declare = {}
@@ -249,7 +249,7 @@ class Qasm3Builder:
 
     def build_program(self):
         """Builds a Program"""
-        self.hoist_declarations(self.quantumcircuit.data)
+        self.hoist_declarations(self.circuit_ctx[-1].data)
         return Program(self.build_header(), self.build_globalstatements())
 
     def hoist_declarations(self, instructions):
@@ -296,7 +296,7 @@ class Qasm3Builder:
         inputs = self.build_inputs()
         bitdeclarations = self.build_bitdeclarations()
         quantumdeclarations = self.build_quantumdeclarations()
-        quantuminstructions = self.build_quantuminstructions(self.quantumcircuit.data)
+        quantuminstructions = self.build_quantuminstructions(self.circuit_ctx[-1].data)
 
         ret = []
         if definitions:
@@ -338,16 +338,23 @@ class Qasm3Builder:
     def build_subroutinedefinition(self, instruction):
         """Builds a SubroutineDefinition"""
         name = self.global_namespace[instruction]
-        quantumArgumentList = self.build_quantumArgumentList(instruction.definition.qregs)
+        self.circuit_ctx.append(instruction.definition)
+        quantumArgumentList = self.build_quantumArgumentList(
+            instruction.definition.qregs, instruction.definition
+        )
         subroutineBlock = SubroutineBlock(
             self.build_quantuminstructions(instruction.definition.data), ReturnStatement()
         )
+        self.circuit_ctx.pop()
         return SubroutineDefinition(Identifier(name), subroutineBlock, quantumArgumentList)
 
     def build_quantumgatedefinition(self, gate):
         """Builds a QuantumGateDefinition"""
         quantumGateSignature = self.build_quantumGateSignature(gate)
+
+        self.circuit_ctx.append(gate.definition)
         quantumBlock = QuantumBlock(self.build_quantuminstructions(gate.definition.data))
+        self.circuit_ctx.pop()
         return QuantumGateDefinition(quantumGateSignature, quantumBlock)
 
     def build_quantumGateSignature(self, gate):
@@ -360,32 +367,35 @@ class Qasm3Builder:
             params.append(Identifier(param_name))
         params += [Identifier(param.name) for param in gate.definition.parameters]
 
+        self.circuit_ctx.append(gate.definition)
         qargList = []
         for qreg in gate.definition.qregs:
             for qubit in qreg:
-                qubit_name = f"{qreg.name}_{qubit.index}"
+                qreg, idx = self.find_bit(qubit)
+                qubit_name = f"{qreg.name}_{idx}"
                 qargList.append(Identifier(qubit_name))
+        self.circuit_ctx.pop()
 
         return QuantumGateSignature(Identifier(name), qargList, params or None)
 
     def build_inputs(self):
         """Builds a list of Inputs"""
         ret = []
-        for param in self.quantumcircuit.parameters:
+        for param in self.circuit_ctx[-1].parameters:
             ret.append(Input(Identifier("float[32]"), Identifier(param.name)))
         return ret
 
     def build_bitdeclarations(self):
         """Builds a list of BitDeclarations"""
         ret = []
-        for creg in self.quantumcircuit.cregs:
+        for creg in self.circuit_ctx[-1].cregs:
             ret.append(BitDeclaration(Identifier(creg.name), Designator(Integer(creg.size))))
         return ret
 
     def build_quantumdeclarations(self):
         """Builds a list of QuantumDeclaration"""
         ret = []
-        for qreg in self.quantumcircuit.qregs:
+        for qreg in self.circuit_ctx[-1].qregs:
             ret.append(QuantumDeclaration(Identifier(qreg.name), Designator(Integer(qreg.size))))
         return ret
 
@@ -423,19 +433,20 @@ class Qasm3Builder:
 
     def build_eqcondition(self, condition):
         """Classical Conditional condition from a instruction.condition"""
-        if isinstance(condition[0], ClassicalRegister):
-            classical_conditionant = Identifier(condition[0].name)
-        else:
-            classical_conditionant = self.build_indexidentifier(condition[0])
-        return ComparisonExpression(classical_conditionant, EqualsOperator(), Integer(condition[1]))
+        return ComparisonExpression(
+            Identifier(condition[0].name), EqualsOperator(), Integer(condition[1])
+        )
 
-    def build_quantumArgumentList(self, qregs: [QuantumRegister]):
+    def build_quantumArgumentList(self, qregs: [QuantumRegister], circuit=None):
         """Builds a quantumArgumentList"""
         quantumArgumentList = []
         for qreg in qregs:
             if self._flat_reg:
                 for qubit in qreg:
-                    qubit_name = f"{qreg.name}_{qubit.index}"
+                    if circuit is None:
+                        raise Exception
+                    reg, idx = self.find_bit(qubit)
+                    qubit_name = f"{reg.name}_{idx}"
                     quantumArgumentList.append(QuantumArgument(Identifier(qubit_name)))
             else:
                 quantumArgumentList.append(
@@ -472,8 +483,21 @@ class Qasm3Builder:
 
     def build_indexidentifier(self, bit: Bit):
         """Build a IndexIdentifier2"""
+        reg, idx = self.find_bit(bit)
         if self._flat_reg:
-            bit_name = f"{bit.register.name}_{bit.index}"
+            bit_name = f"{reg.name}_{idx}"
             return IndexIdentifier2(Identifier(bit_name))
         else:
-            return IndexIdentifier2(Identifier(bit.register.name), [Integer(bit.index)])
+            return IndexIdentifier2(Identifier(reg.name), [Integer(idx)])
+
+    def find_bit(self, bit):
+        """Returns the register and the index in that register for a particular bit"""
+        for qreg in self.circuit_ctx[-1].qregs:
+            for index, qubit in enumerate(qreg):
+                if qubit == bit:
+                    return qreg, index
+        for creg in self.circuit_ctx[-1].cregs:
+            for index, clbit in enumerate(creg):
+                if clbit == bit:
+                    return creg, index
+        raise IndexError
