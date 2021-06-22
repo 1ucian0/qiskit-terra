@@ -339,8 +339,9 @@ class Qasm3Builder:
         """Builds a SubroutineDefinition"""
         name = self.global_namespace[instruction]
         self.circuit_ctx.append(instruction.definition)
-        quantumArgumentList = self.build_quantumArgumentList(instruction.definition.qregs,
-                                                             instruction.definition)
+        quantumArgumentList = self.build_quantumArgumentList(
+            instruction.definition.qregs, instruction.definition
+        )
         subroutineBlock = SubroutineBlock(
             self.build_quantuminstructions(instruction.definition.data), ReturnStatement()
         )
@@ -436,7 +437,7 @@ class Qasm3Builder:
             Identifier(condition[0].name), EqualsOperator(), Integer(condition[1])
         )
 
-    def build_quantumArgumentList(self, qregs: [QuantumRegister], circuit = None):
+    def build_quantumArgumentList(self, qregs: [QuantumRegister], circuit=None):
         """Builds a quantumArgumentList"""
         quantumArgumentList = []
         for qreg in qregs:
@@ -490,6 +491,7 @@ class Qasm3Builder:
             return IndexIdentifier2(Identifier(reg.name), [Integer(idx)])
 
     def find_bit(self, bit):
+        """Returns the register and the index in that register for a particular bit"""
         for qreg in self.circuit_ctx[-1].qregs:
             for index, qubit in enumerate(qreg):
                 if qubit == bit:
@@ -498,4 +500,4 @@ class Qasm3Builder:
             for index, clbit in enumerate(creg):
                 if clbit == bit:
                     return creg, index
-        raise Exception
+        raise IndexError
