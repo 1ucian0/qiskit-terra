@@ -38,32 +38,77 @@ from qiskit.utils.validation import validate_min
 from qiskit.utils.backend_utils import is_aer_provider
 from qiskit.utils.deprecation import deprecate_function
 from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit.opflow import PauliSumOp
 from ..optimizers import Optimizer, SLSQP
 from ..variational_algorithm import VariationalAlgorithm, VariationalResult
 from .minimum_eigen_solver import MinimumEigensolver, MinimumEigensolverResult
 from ..exceptions import AlgorithmError
 
 
-class EntanglementForgingExpVal():
+class System:
+    def __init__(
+        self,
+        bit_strings: List[str],
+        ansatz: QuantumCircuit,
+        initial_parameter: float,  # TODO should it be a list? or a dict?
+    ):
+        self.bit_strings = bit_strings
+        self.ansatz = ansatz
+        self.initial_parameter = initial_parameter
 
-    def __init__(self, n, k, bit_strings_1, ansatz_1, bit_strings_2, ansatz_2, operator,
-                 quantum_instance):
 
-        self._n = n
-        self._k = k
-        self._bit_strings_1 = bit_strings_1
-        self._bit_strings_2 = bit_strings_2
-        self._ansatz_1 = ansatz_1
-        self._ansatz_2 = ansatz_2
+class EntanglementForgingExpVal:
+    def __init__(
+        self,
+        system1: System,
+        system2: System,
+        operator: PauliSumOp,
+        quantum_instance: QuantumInstance or BaseBackend,
+        symmetry=False,
+    ):
+        """
+
+        Args:
+            system1:
+            system2:
+            operator:
+            quantum_instance:
+            symmetry: Maybe, if system2 is None use system1 with same parameters.
+        """
+        # self._n = n   # TODO remove same as check len(bit_strings_1) + len(bit_strings_2)
+        # self._k = k   # TODO remove size of bitstrings
+        # self._bit_strings_1 = system1.bit_strings
+        # self._bit_strings_2 = system2.bit_strings
+        # self._ansatz_1 = self.ansatz_1
+        # self._ansatz_2 = ansatz_2
+        self.system1 = system1
+        self.system2 = system2
         self._operator = operator
         self._quantum_instance = quantum_instance
+        self.symmetry = symmetry
 
         # TODO: maybe also lazy evaluation on first evaluate instead of starting compilation here?
-        self._operator_1 = None
-        self._operator_2 = None
+        self._operator_table = None
+
+    @property
+    def operator_table(self):
+        if self._operator_table is None:
+            self._calculate_operator_table()
+        return self._operator_table
+
+    def _calculate_operator_table(self):
+        self._operator_table = []
+        for h in self._operator:
+            pauli_string = h.primitive.table.to_labels()[0]
+
+            s1 = pauli_string[:len(self.system1.bit_strings)]
+            s2 = pauli_string[len(self.system1.bit_strings):]
+
+            O1 = PauliSumOp.from_list([(s1, 1)])
+            O2 = PauliSumOp.from_list([(s2, 1)])
+            self._operator_table.append((h.coeffs[0], O1, O2))
 
     def evaluate(self, params):
-
         start = 0
         end = self._ansatz_1.num_parameters
         theta_1 = params[start:end]
@@ -75,7 +120,7 @@ class EntanglementForgingExpVal():
         start = end
         end += self._k
 
-        schmidt_coeffs = params[:self.]
+        schmidt_coeffs = params[: self._]
 
         # initialize value
         value = 0.0
@@ -103,7 +148,9 @@ class EntanglementForgingExpVal():
             for j in range(i):
                 value_ij = 0.0
                 for p in range(4):
-                    qc_ijp = self._prepare_phi_n_m_p(self.bit_strings_1[i], self.bit_strings_2[j], p)
+                    qc_ijp = self._prepare_phi_n_m_p(
+                        self.bit_strings_1[i], self.bit_strings_2[j], p
+                    )
                     qc_ijp_1 = qc_ijp.compose(ansatz_1)
                     qc_ijp_2 = qc_ijp.compose(ansatz_2)
                     o_1_phi_ij_p = 0.0  # TODO
@@ -113,4 +160,3 @@ class EntanglementForgingExpVal():
 
         # return estimated value
         return value
-
