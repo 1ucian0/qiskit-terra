@@ -101,8 +101,8 @@ class EntanglementForgingExpVal:
         for h in self._operator:
             pauli_string = h.primitive.table.to_labels()[0]
 
-            s1 = pauli_string[:len(self.system1.bit_strings)]
-            s2 = pauli_string[len(self.system1.bit_strings):]
+            s1 = pauli_string[: len(self.system1.bit_strings)]
+            s2 = pauli_string[len(self.system1.bit_strings) :]
 
             O1 = PauliSumOp.from_list([(s1, 1)])
             O2 = PauliSumOp.from_list([(s2, 1)])
