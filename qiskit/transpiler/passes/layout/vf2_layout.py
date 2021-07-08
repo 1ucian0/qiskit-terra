@@ -68,6 +68,7 @@ class VF2Layout(AnalysisPass):
 
         cm_nodes = list(cm_graph.node_indexes())
         if self.seed != -1:
+            print(self.seed)
             random.Random(self.seed).shuffle(cm_nodes)
             shuffled_cm_graph = type(cm_graph)()
             shuffled_cm_graph.add_nodes_from(cm_nodes)
@@ -78,11 +79,7 @@ class VF2Layout(AnalysisPass):
         im_graph.add_nodes_from(range(len(qubits)))
         im_graph.add_edges_from_no_data(interactions)
 
-        if self.id_order:
-            id_order = self.id_order
-        else:
-            id_order = im_graph.num_edges() < 300
-        mapping = vf2_mapping(cm_graph, im_graph, subgraph=True, id_order=id_order, induced=False)
+        mapping = vf2_mapping(cm_graph, im_graph, subgraph=True, id_order=self.id_order, induced=False)
 
         if mapping:
             stop_reason = "solution found"
