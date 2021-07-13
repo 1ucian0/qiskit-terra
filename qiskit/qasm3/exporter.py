@@ -498,12 +498,5 @@ class Qasm3Builder:
 
     def find_bit(self, bit):
         """Returns the register and the index in that register for a particular bit"""
-        for qreg in self.circuit_ctx[-1].qregs:
-            for index, qubit in enumerate(qreg):
-                if qubit == bit:
-                    return qreg, index
-        for creg in self.circuit_ctx[-1].cregs:
-            for index, clbit in enumerate(creg):
-                if clbit == bit:
-                    return creg, index
-        raise IndexError
+        bit_location = self.circuit_ctx[-1].find_bit(bit)
+        return bit_location.registers[0]
