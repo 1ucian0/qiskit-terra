@@ -99,8 +99,10 @@ class Exporter:
         self.quantumcircuit = quantumcircuit
         if includes is None:
             self.includes = ["stdgates.inc"]
-        if isinstance(includes, str):
+        elif isinstance(includes, str):
             self.includes = [includes]
+        else:
+            self.includes = includes
 
     def dumps(self):
         """Returns the QASM3 string."""
@@ -186,7 +188,7 @@ class GlobalNamespace:
                 yield full_path
 
     def __setitem__(self, name_str, instruction):
-        self._data[name_str] = instruction
+        self._data[name_str] = type(instruction)
         self._data[id(instruction)] = name_str
 
     def __getitem__(self, key):
@@ -200,10 +202,12 @@ class GlobalNamespace:
     def __contains__(self, instruction):
         if isinstance(instruction, UGate):
             return True
+        if id(instruction) in self._data:
+            return True
         if type(instruction) in [Gate, Instruction]:  # user-defined instructions/gate
             return self._data.get(instruction.name, None) == instruction
         return instruction.name in self._data and isinstance(
-            instruction, self._data[instruction.name]
+            instruction, self._data.get(instruction.name)
         )
 
     def register(self, instruction):
@@ -324,6 +328,8 @@ class Qasm3Builder:
 
     def build_definition(self, instruction, builder):
         """Using a given definition builder, builds that definition."""
+        if hasattr(instruction, "_qasm3_definition"):
+            return instruction._qasm3_definition
         self._flat_reg = True
         definition = builder(instruction)
         self._flat_reg = False

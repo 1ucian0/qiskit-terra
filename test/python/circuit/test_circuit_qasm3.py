@@ -416,3 +416,53 @@ class TestCircuitQasm3(QiskitTestCase):
             ]
         )
         self.assertEqual(Exporter(qc).dumps(), expected_qasm)
+
+    def test_no_include(self):
+        qc = ClassicalRegister(2, name="qc")
+        q = QuantumRegister(5, "q")
+        circuit = QuantumCircuit(q, qc)
+        circuit.rz(pi / 2, 0)
+        circuit.sx(0)
+        circuit.rz(pi / 2, 0)
+        circuit.cx(0, 1)
+        circuit.measure(q[0], qc[0])
+        circuit.measure(q[1], qc[1])
+        expected_qasm = "\n".join(
+            [
+                "OPENQASM 3;",
+                "gate cx c, t {ctrl @ U(pi, 0, pi) c, t}",
+                "gate u3(param_0, param_1, param_2) q_0 {",
+                "U(0, 0, pi/2) q_0;",
+                "}",
+                "gate u1(param_0) q_0 {",
+                "u3(0, 0, pi/2) q_0;",
+                "}",
+                "gate rz(param_0) q_0 {",
+                "u1(pi/2) q_0;",
+                "}",
+                "gate sdg q_0 {",
+                "u1(-pi/2) q_0;",
+                "}",
+                "gate u2(param_0, param_1) q_0 {",
+                "u3(pi/2, 0, pi) q_0;",
+                "}",
+                "gate h q_0 {",
+                "u2(0, pi) q_0;",
+                "}",
+                "gate sx q_0 {",
+                "sdg q_0;",
+                "h q_0;",
+                "sdg q_0;",
+                "}",
+                "bit[2] qc;",
+                "qubit[5] q;",
+                "rz(pi/2) q[0];",
+                "sx q[0];",
+                "rz(pi/2) q[0];",
+                "cx q[0], q[1];",
+                "qc[0] = measure q[0];",
+                "qc[1] = measure q[1];",
+                ""
+            ]
+        )
+        self.assertEqual(Exporter(circuit, includes=[]).dumps(), expected_qasm)

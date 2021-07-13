@@ -78,7 +78,10 @@ class Program(Class):
     def qasm(self):
         ret = self.header.qasm()
         for statement in self.statements:
-            ret.append(statement.qasm())
+            if isinstance(statement, str):
+                ret.append(statement)
+            else:
+                ret.append(statement.qasm())
         return ret
 
 
