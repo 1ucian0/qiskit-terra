@@ -12,7 +12,7 @@
 
 """Test QASM3 exporter."""
 
-from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, transpile
 from qiskit.circuit import Parameter
 from qiskit.test import QiskitTestCase
 from qiskit.qasm3 import Exporter
@@ -418,6 +418,7 @@ class TestCircuitQasm3(QiskitTestCase):
         self.assertEqual(Exporter(qc).dumps(), expected_qasm)
 
     def test_no_include(self):
+        """Test explicit gate declaration (no include)"""
         qc = ClassicalRegister(2, name="qc")
         q = QuantumRegister(5, "q")
         circuit = QuantumCircuit(q, qc)
@@ -430,7 +431,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "gate cx c, t {ctrl @ U(pi, 0, pi) c, t}",
+                "gate cx c, t {CX c, t;}",
                 "gate u3(param_0, param_1, param_2) q_0 {",
                 "U(0, 0, pi/2) q_0;",
                 "}",
@@ -462,7 +463,65 @@ class TestCircuitQasm3(QiskitTestCase):
                 "cx q[0], q[1];",
                 "qc[0] = measure q[0];",
                 "qc[1] = measure q[1];",
-                ""
+                "",
             ]
         )
         self.assertEqual(Exporter(circuit, includes=[]).dumps(), expected_qasm)
+
+    def test_teleportation(self):
+        """Teleportation with physical qubits"""
+        qc = QuantumCircuit(3, 2)
+        qc.h(1)
+        qc.cx(1, 2)
+        qc.barrier()
+        qc.cx(0, 1)
+        qc.h(0)
+        qc.barrier()
+        qc.measure([0, 1], [0, 1])
+        qc.barrier()
+        qc.x(2).c_if(qc.clbits[1], 1)
+        qc.z(2).c_if(qc.clbits[0], 1)
+
+        transpiled = transpile(qc, initial_layout=[0, 1, 2])
+        expected_qasm = "\n".join(
+            [
+                "OPENQASM 3;",
+                "gate cx c, t {CX c, t;}",
+                "gate u3(param_0, param_1, param_2) q_0 {",
+                "U(pi/2, 0, pi) q_0;",
+                "}",
+                "gate u2(param_0, param_1) q_0 {",
+                "u3(pi/2, 0, pi) q_0;",
+                "}",
+                "gate h q_0 {",
+                "u2(0, pi) q_0;",
+                "}",
+                "gate x q_0 {",
+                "u3(pi, 0, pi) q_0;",
+                "}",
+                "gate u1(param_0) q_0 {",
+                "u3(0, 0, pi) q_0;",
+                "}",
+                "gate z q_0 {",
+                "u1(pi) q_0;",
+                "}",
+                "bit[2] c;",
+                "h $1;",
+                "cx $1, $2;",
+                "barrier $0, $1, $2;",
+                "cx $0, $1;",
+                "h $0;",
+                "barrier $0, $1, $2;",
+                "c[0] = measure $0;",
+                "c[1] = measure $1;",
+                "barrier $0, $1, $2;",
+                "if (c[1] == True){",
+                "x $2;",
+                "}",
+                "if (c[0] == True){",
+                "z $2;",
+                "}",
+                "",
+            ]
+        )
+        self.assertEqual(Exporter(transpiled, includes=[]).dumps(), expected_qasm)

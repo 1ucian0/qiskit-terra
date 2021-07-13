@@ -156,6 +156,7 @@ class Identifier(Class):
     def qasm(self):
         return self.string
 
+
 class PhysicalQubitIdentifier(Identifier):
     """
     TOOD

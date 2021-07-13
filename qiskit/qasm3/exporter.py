@@ -85,9 +85,10 @@ from .grammar import (
     Expression,
     CalibrationDefinition,
     Input,
-    PhysicalQubitIdentifier
+    PhysicalQubitIdentifier,
 )
-from qiskit.circuit.quantumregister import Qubit
+from qiskit.circuit import Qubit, Clbit
+
 
 class Exporter:
     """QASM3 expoter main class."""
@@ -301,9 +302,11 @@ class Qasm3Builder:
         definitions = self.build_definitions()
         inputs = self.build_inputs()
         bitdeclarations = self.build_bitdeclarations()
-        quantumdeclarations = self.build_quantumdeclarations()
-        if hasattr(self.circuit_ctx[-1], '_layout'):
+        quantumdeclarations = None
+        if hasattr(self.circuit_ctx[-1], "_layout") and self.circuit_ctx[-1]._layout is not None:
             self._physical_qubit = True
+        else:
+            quantumdeclarations = self.build_quantumdeclarations()
         quantuminstructions = self.build_quantuminstructions(self.circuit_ctx[-1].data)
         self._physical_qubit = False
 
@@ -314,7 +317,7 @@ class Qasm3Builder:
             ret += inputs
         if bitdeclarations:
             ret += bitdeclarations
-        if quantumdeclarations and not hasattr(self.circuit_ctx[-1], '_layout'):
+        if quantumdeclarations:
             ret += quantumdeclarations
         if quantuminstructions:
             ret += quantuminstructions
@@ -444,9 +447,11 @@ class Qasm3Builder:
 
     def build_eqcondition(self, condition):
         """Classical Conditional condition from a instruction.condition"""
-        return ComparisonExpression(
-            Identifier(condition[0].name), EqualsOperator(), Integer(condition[1])
-        )
+        if isinstance(condition[0], Clbit):
+            condition_on = self.build_indexidentifier(condition[0])
+        else:
+            condition_on = Identifier(condition[0].name)
+        return ComparisonExpression(condition_on, EqualsOperator(), Integer(condition[1]))
 
     def build_quantumArgumentList(self, qregs: [QuantumRegister], circuit=None):
         """Builds a quantumArgumentList"""
