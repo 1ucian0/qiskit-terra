@@ -85,8 +85,9 @@ from .grammar import (
     Expression,
     CalibrationDefinition,
     Input,
+    PhysicalQubitIdentifier
 )
-
+from qiskit.circuit.quantumregister import Qubit
 
 class Exporter:
     """QASM3 expoter main class."""
@@ -230,6 +231,7 @@ class Qasm3Builder:
         self._subroutine_to_declare = {}
         self._opaque_to_declare = {}
         self._flat_reg = False
+        self._physical_qubit = False
         self.global_namespace = GlobalNamespace(includeslist)
 
     def _register_gate(self, gate):
@@ -300,7 +302,10 @@ class Qasm3Builder:
         inputs = self.build_inputs()
         bitdeclarations = self.build_bitdeclarations()
         quantumdeclarations = self.build_quantumdeclarations()
+        if hasattr(self.circuit_ctx[-1], '_layout'):
+            self._physical_qubit = True
         quantuminstructions = self.build_quantuminstructions(self.circuit_ctx[-1].data)
+        self._physical_qubit = False
 
         ret = []
         if definitions:
@@ -309,7 +314,7 @@ class Qasm3Builder:
             ret += inputs
         if bitdeclarations:
             ret += bitdeclarations
-        if quantumdeclarations:
+        if quantumdeclarations and not hasattr(self.circuit_ctx[-1], '_layout'):
             ret += quantumdeclarations
         if quantuminstructions:
             ret += quantuminstructions
@@ -490,6 +495,8 @@ class Qasm3Builder:
     def build_indexidentifier(self, bit: Bit):
         """Build a IndexIdentifier2"""
         reg, idx = self.find_bit(bit)
+        if self._physical_qubit and isinstance(bit, Qubit):
+            return PhysicalQubitIdentifier(Identifier(self.circuit_ctx[-1].find_bit(bit).index))
         if self._flat_reg:
             bit_name = f"{reg.name}_{idx}"
             return IndexIdentifier2(Identifier(bit_name))

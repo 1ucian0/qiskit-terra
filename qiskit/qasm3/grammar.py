@@ -156,6 +156,17 @@ class Identifier(Class):
     def qasm(self):
         return self.string
 
+class PhysicalQubitIdentifier(Identifier):
+    """
+    TOOD
+    """
+
+    def __init__(self, identifier: Identifier):
+        self.identifier = identifier
+
+    def qasm(self):
+        return f"${self.identifier.qasm()}"
+
 
 class IndexIdentifier(Identifier):
     """
