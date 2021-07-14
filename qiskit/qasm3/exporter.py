@@ -97,8 +97,10 @@ class Exporter:
         self,
         quantumcircuit,  # QuantumCircuit
         includes=None,  # list[filename:str]
+        basis_gates=['U']
     ):
         self.quantumcircuit = quantumcircuit
+        self.basis_gates=basis_gates
         if includes is None:
             self.includes = ["stdgates.inc"]
         elif isinstance(includes, str):
@@ -122,7 +124,7 @@ class Exporter:
 
     def qasm_tree(self):
         """Returns a Qasm3 AST"""
-        return Qasm3Builder(self.quantumcircuit, self.includes).build_program().qasm()
+        return Qasm3Builder(self.quantumcircuit, self.includes, self.basis_gates).build_program().qasm()
 
 
 class GlobalNamespace:
@@ -164,8 +166,9 @@ class GlobalNamespace:
     }
     include_paths = [abspath(join(dirname(__file__), "..", "qasm", "libs"))]
 
-    def __init__(self, includelist):
-        self._data = {}
+    def __init__(self, includelist, basis_gates=[]):
+        self._data = {gate: None for gate in basis_gates}
+
         for includefile in includelist:
             if includefile == "stdgates.inc":
                 self._data.update(self.qiskit_gates)
@@ -208,9 +211,12 @@ class GlobalNamespace:
             return True
         if type(instruction) in [Gate, Instruction]:  # user-defined instructions/gate
             return self._data.get(instruction.name, None) == instruction
-        return instruction.name in self._data and isinstance(
-            instruction, self._data.get(instruction.name)
-        )
+        if instruction.name in self._data:
+            if self._data.get(instruction.name) is None:  # it is a basis gate:
+                return True
+            if isinstance(instruction, self._data.get(instruction.name)):
+                return True
+        return False
 
     def register(self, instruction):
         """Register an instruction in the namespace"""
@@ -225,7 +231,7 @@ class Qasm3Builder:
 
     builtins = (Barrier, Measure)
 
-    def __init__(self, quantumcircuit, includeslist):
+    def __init__(self, quantumcircuit, includeslist, basis_gates):
         self.circuit_ctx = [quantumcircuit]
         self.includeslist = includeslist
         self._gate_to_declare = {}
@@ -233,7 +239,7 @@ class Qasm3Builder:
         self._opaque_to_declare = {}
         self._flat_reg = False
         self._physical_qubit = False
-        self.global_namespace = GlobalNamespace(includeslist)
+        self.global_namespace = GlobalNamespace(includeslist, basis_gates)
 
     def _register_gate(self, gate):
         self.global_namespace.register(gate)
