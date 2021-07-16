@@ -192,7 +192,7 @@ class Expression(Class):
     """
 
     def __init__(self, something):
-        self.something = something  # TODO
+        self.something = something
 
     def qasm(self):
         return str(self.something)
@@ -268,8 +268,8 @@ class ExpressionTerminator(Expression):
 
 class Integer(Expression):
     """Integer : Digit+ ;"""
-
-    pass
+    def qasm(self):
+        return str(int(self.something))
 
 
 class Designator(Class):

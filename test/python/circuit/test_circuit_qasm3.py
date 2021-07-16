@@ -525,3 +525,5 @@ class TestCircuitQasm3(QiskitTestCase):
             ]
         )
         self.assertEqual(Exporter(transpiled, includes=[]).dumps(), expected_qasm)
+
+        # TODO add test with basis_gates parameter
