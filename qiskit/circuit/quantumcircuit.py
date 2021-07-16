@@ -1197,7 +1197,7 @@ class QuantumCircuit:
 
         for register in regs:
             if isinstance(register, Register) and any(
-                register.name == reg.name for reg in self.qregs + self.cregs
+                register.name == reg.name for reg in self.qregs + self.cregs if reg is not None
             ):
                 raise CircuitError('register name "%s" already exists' % register.name)
 
