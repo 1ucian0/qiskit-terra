@@ -16,7 +16,7 @@
 
 from os.path import dirname, join, abspath, exists
 
-# from qiskit.circuit.tools import pi_check
+from qiskit.circuit.tools import pi_check
 from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction
 from qiskit.circuit.library.standard_gates import (
     UGate,
@@ -98,9 +98,11 @@ class Exporter:
         quantumcircuit,  # QuantumCircuit
         includes=None,  # list[filename:str]
         basis_gates=["U"],
+        allow_constants=False,
     ):
         self.quantumcircuit = quantumcircuit
         self.basis_gates = basis_gates
+        self.allow_constants = allow_constants
         if includes is None:
             self.includes = ["stdgates.inc"]
         elif isinstance(includes, str):
@@ -125,7 +127,7 @@ class Exporter:
     def qasm_tree(self):
         """Returns a Qasm3 AST"""
         return (
-            Qasm3Builder(self.quantumcircuit, self.includes, self.basis_gates)
+            Qasm3Builder(self.quantumcircuit, self.includes, self.basis_gates, self.allow_constants)
             .build_program()
             .qasm()
         )
@@ -235,7 +237,7 @@ class Qasm3Builder:
 
     builtins = (Barrier, Measure)
 
-    def __init__(self, quantumcircuit, includeslist, basis_gates):
+    def __init__(self, quantumcircuit, includeslist, basis_gates, allow_constants):
         self.circuit_ctx = [quantumcircuit]
         self.includeslist = includeslist
         self._gate_to_declare = {}
@@ -243,6 +245,7 @@ class Qasm3Builder:
         self._opaque_to_declare = {}
         self._flat_reg = False
         self._physical_qubit = False
+        self.allow_constants = allow_constants
         self.global_namespace = GlobalNamespace(includeslist, basis_gates)
 
     def _register_gate(self, gate):
@@ -494,10 +497,13 @@ class Qasm3Builder:
         else:
             quantumGateName = Identifier(self.global_namespace[instruction[0]])
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
-        expressionList = [
-            # TODO Expression(pi_check(param, output="qasm")) for param in instruction[0].params
-            Expression(param) for param in instruction[0].params
-        ]
+        if self.allow_constants:
+            expressionList = [
+                Expression(pi_check(param, output="qasm")) for param in instruction[0].params
+            ]
+        else:
+            expressionList = [Expression(param) for param in instruction[0].params]
+
         return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
 
     def build_subroutinecall(self, instruction):
