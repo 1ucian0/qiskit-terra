@@ -268,6 +268,7 @@ class ExpressionTerminator(Expression):
 
 class Integer(Expression):
     """Integer : Digit+ ;"""
+
     def qasm(self):
         return str(int(self.something))
 

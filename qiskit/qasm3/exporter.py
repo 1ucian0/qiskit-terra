@@ -97,10 +97,10 @@ class Exporter:
         self,
         quantumcircuit,  # QuantumCircuit
         includes=None,  # list[filename:str]
-        basis_gates=['U']
+        basis_gates=["U"],
     ):
         self.quantumcircuit = quantumcircuit
-        self.basis_gates=basis_gates
+        self.basis_gates = basis_gates
         if includes is None:
             self.includes = ["stdgates.inc"]
         elif isinstance(includes, str):
@@ -124,7 +124,11 @@ class Exporter:
 
     def qasm_tree(self):
         """Returns a Qasm3 AST"""
-        return Qasm3Builder(self.quantumcircuit, self.includes, self.basis_gates).build_program().qasm()
+        return (
+            Qasm3Builder(self.quantumcircuit, self.includes, self.basis_gates)
+            .build_program()
+            .qasm()
+        )
 
 
 class GlobalNamespace:
