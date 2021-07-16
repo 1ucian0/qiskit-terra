@@ -260,7 +260,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
+        self.assertEqual(Exporter(circuit, allow_constants=True).dumps(), expected_qasm)
 
     def test_from_qasm2_with_composite_circuit_with_one_param(self):
         """Test circuit from QASM2 with a parametrized custom gate."""
@@ -290,7 +290,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
+        self.assertEqual(Exporter(circuit, allow_constants=True).dumps(), expected_qasm)
 
     def test_from_qasm2_with_composite_circuit_with_three_param(self):
         """Test circuit from QASM2 with three parametrized custom gate."""
@@ -353,7 +353,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
+        self.assertEqual(Exporter(circuit, allow_constants=True).dumps(), expected_qasm)
 
     def test_unbound_circuit(self):
         """Test with unbound parameters (turning them into inputs)."""
@@ -431,7 +431,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "gate cx c, t {CX c, t;}",
+                "gate cx c, t {ctrl @ U(pi, 0, pi) c, t}",
                 "gate u3(param_0, param_1, param_2) q_0 {",
                 "U(0, 0, pi/2) q_0;",
                 "}",
@@ -466,7 +466,9 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit, includes=[]).dumps(), expected_qasm)
+        self.assertEqual(
+            Exporter(circuit, includes=[], allow_constants=True).dumps(), expected_qasm
+        )
 
     def test_teleportation(self):
         """Teleportation with physical qubits"""
@@ -486,7 +488,7 @@ class TestCircuitQasm3(QiskitTestCase):
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
-                "gate cx c, t {CX c, t;}",
+                "gate cx c, t {ctrl @ U(pi, 0, pi) c, t}",
                 "gate u3(param_0, param_1, param_2) q_0 {",
                 "U(pi/2, 0, pi) q_0;",
                 "}",
@@ -524,6 +526,62 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(transpiled, includes=[]).dumps(), expected_qasm)
+        self.assertEqual(
+            Exporter(transpiled, includes=[], allow_constants=True).dumps(), expected_qasm
+        )
 
-        # TODO add test with basis_gates parameter
+    def test_basis_gates(self):
+        """Teleportation with physical qubits"""
+        qc = QuantumCircuit(3, 2)
+        qc.h(1)
+        qc.cx(1, 2)
+        qc.barrier()
+        qc.cx(0, 1)
+        qc.h(0)
+        qc.barrier()
+        qc.measure([0, 1], [0, 1])
+        qc.barrier()
+        qc.x(2).c_if(qc.clbits[1], 1)
+        qc.z(2).c_if(qc.clbits[0], 1)
+
+        transpiled = transpile(qc, initial_layout=[0, 1, 2])
+        expected_qasm = "\n".join(
+            [
+                "OPENQASM 3;",
+                "gate u3(param_0, param_1, param_2) q_0 {",
+                "U(pi/2, 0, pi) q_0;",
+                "}",
+                "gate u2(param_0, param_1) q_0 {",
+                "u3(pi/2, 0, pi) q_0;",
+                "}",
+                "gate h q_0 {",
+                "u2(0, pi) q_0;",
+                "}",
+                "gate x q_0 {",
+                "u3(pi, 0, pi) q_0;",
+                "}",
+                "bit[2] c;",
+                "h $1;",
+                "cx $1, $2;",
+                "barrier $0, $1, $2;",
+                "cx $0, $1;",
+                "h $0;",
+                "barrier $0, $1, $2;",
+                "c[0] = measure $0;",
+                "c[1] = measure $1;",
+                "barrier $0, $1, $2;",
+                "if (c[1] == 1){",
+                "x $2;",
+                "}",
+                "if (c[0] == 1){",
+                "z $2;",
+                "}",
+                "",
+            ]
+        )
+        self.assertEqual(
+            Exporter(
+                transpiled, includes=[], allow_constants=True, basis_gates=["cx", "z", "U"]
+            ).dumps(),
+            expected_qasm,
+        )

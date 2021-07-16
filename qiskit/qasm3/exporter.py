@@ -98,7 +98,7 @@ class Exporter:
         quantumcircuit,  # QuantumCircuit
         includes=None,  # list[filename:str]
         basis_gates=["U"],
-        allow_constants=False,
+        allow_constants=False,  # TODO to remove before merge
     ):
         self.quantumcircuit = quantumcircuit
         self.basis_gates = basis_gates

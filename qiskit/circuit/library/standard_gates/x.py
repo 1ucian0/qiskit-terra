@@ -181,7 +181,7 @@ class CXGate(ControlledGate):
         super().__init__(
             "cx", 2, [], num_ctrl_qubits=1, label=label, ctrl_state=ctrl_state, base_gate=XGate()
         )
-        self._qasm3_definition = "gate cx c, t {CX c, t;}\n"
+        self._qasm3_definition = "gate cx c, t {ctrl @ U(pi, 0, pi) c, t}\n"
 
     def control(self, num_ctrl_qubits=1, label=None, ctrl_state=None):
         """Return a controlled-X gate with more control lines.
