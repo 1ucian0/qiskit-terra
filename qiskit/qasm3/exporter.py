@@ -16,7 +16,7 @@
 
 from os.path import dirname, join, abspath, exists
 
-from qiskit.circuit.tools import pi_check
+# from qiskit.circuit.tools import pi_check
 from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction
 from qiskit.circuit.library.standard_gates import (
     UGate,
@@ -495,7 +495,8 @@ class Qasm3Builder:
             quantumGateName = Identifier(self.global_namespace[instruction[0]])
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
         expressionList = [
-            Expression(pi_check(param, output="qasm")) for param in instruction[0].params
+            # TODO Expression(pi_check(param, output="qasm")) for param in instruction[0].params
+            Expression(param) for param in instruction[0].params
         ]
         return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
 
