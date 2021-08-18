@@ -33,3 +33,16 @@ def dumps(quantumcircuit):
     """
     exporter = Exporter(quantumcircuit)
     return exporter.dumps()
+
+
+def dump(quantumcircuit, fp):
+    """Serializes a :class:`~qiskit.circuit.QuantumCircuit` object as a OpenQASM3 stream to fp
+    (a .write()-supporting file-like object).
+
+    Args:
+        quantumcircuit (QuantumCircuit): Circuit to serialize.
+        fp (TextIOBase): Filepointer to dump the OpenQASM3 serialization
+    """
+    exporter = Exporter(quantumcircuit)
+    for line in exporter.dumps():
+        
