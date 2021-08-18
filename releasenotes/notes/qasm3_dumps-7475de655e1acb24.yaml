@@ -14,6 +14,6 @@ features:
 
             print(qasm3.dumps(qc))
 
-    This initial release has limited support for named registers, basic buildin instructions
+    This initial release has limited support for named registers, basic builtin instructions
     (just as measure and barriers), user-defined gates, user-defined instructions (as
     subroutines), and opaque gates/instructions as ``defcal``.
