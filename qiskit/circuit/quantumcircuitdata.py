@@ -46,14 +46,9 @@ class ValidatedMutableSequence(MutableSequence):
     def __setitem__(self, index, value):
         pass
 
+    @abstractmethod
     def insert(self, index, value):
-        try:
-            # To consolidate validation to __setitem__, insert None and overwrite.
-            self._list.insert(index, None)
-            self[index] = value
-        except CircuitError as err:
-            del self._list[index]
-            raise err
+        pass
 
     def __len__(self):
         return len(self._list)
@@ -137,6 +132,15 @@ class QuantumCircuitData(ValidatedMutableSequence):
 
         self._circuit._update_parameter_table(instruction)
 
+    def insert(self, index, value):
+        try:
+            # To consolidate validation to __setitem__, insert None and overwrite.
+            self._list.insert(index, None)
+            self[index] = value
+        except CircuitError as err:
+            del self._list[index]
+            raise err
+
     def __delitem__(self, index):
         del self._list[index]
 
@@ -152,9 +156,22 @@ class QuantumCircuitQregs(ValidatedMutableSequence):
     def __setitem__(self, key, value):
         self._circuit.add_register(value)
         self._list[key] = value
+        del self._list[-1]
+
+    def insert(self, index, value):
+        self._circuit.add_register(value)
+        self._list.insert(index, self._list[-1])
+        del self._list[-1]
 
     def __delitem__(self, index):
         del self._list[index]
+
+    def reverse(self):
+        # Override MutableSequence.reverse which uses repeated pairwise
+        # calls to __setitem__ that do not maintain uniqueness of registers
+        # in _list throughout, and so raises a "CircuitError: register name
+        # ... already exists"
+        self._list.reverse()
 
 
 class QuantumCircuitCregs(ValidatedMutableSequence):
@@ -168,6 +185,19 @@ class QuantumCircuitCregs(ValidatedMutableSequence):
     def __setitem__(self, key, value):
         self._circuit.add_register(value)
         self._list[key] = value
+        del self._list[-1]
+
+    def insert(self, index, value):
+        self._circuit.add_register(value)
+        self._list.insert(index, self._list[-1])
+        del self._list[-1]
 
     def __delitem__(self, index):
         del self._list[index]
+
+    def reverse(self):
+        # Override MutableSequence.reverse which uses repeated pairwise
+        # calls to __setitem__ that do not maintain uniqueness of registers
+        # in _list throughout, and so raises a "CircuitError: register name
+        # ... already exists"
+        self._list.reverse()

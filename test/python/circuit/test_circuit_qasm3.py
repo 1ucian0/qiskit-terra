@@ -309,7 +309,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "OPENQASM 3;",
                 "include stdgates.inc;",
                 "gate custom q_0 {",
-                "rx(0.500000000000000) q_0;",
+                "rx(0.5) q_0;",
                 "}",
                 "qubit[1] q;",
                 "custom q[0];",
