@@ -15,8 +15,53 @@
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, transpile
 from qiskit.circuit import Parameter
 from qiskit.test import QiskitTestCase
-from qiskit.qasm3 import Exporter
+from qiskit.qasm3 import Exporter, dump, dumps
 from qiskit.qasm import pi
+
+
+class TestQasm3Functions(QiskitTestCase):
+    """QASM3 module - high level functions"""
+    def setUp(self):
+        self.circuit = QuantumCircuit(2)
+        self.circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
+        self.expected_qasm = "\n".join(
+            [
+                "OPENQASM 3;",
+                "include stdgates.inc;",
+                "qubit[2] q;",
+                "U(2*pi, 3*pi, -5*pi) q[0];",
+                "",
+            ]
+        )
+        super().setUp()
+
+    def test_dumps(self):
+        """Test dumps."""
+        result = dumps(self.circuit)
+        self.assertEqual(result, self.expected_qasm)
+
+    # def test_dump(self):
+    #     """Test dump into an IO stream."""
+    #     circuit = QuantumCircuit(2)
+    #     circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
+    #     expected_qasm = "\n".join(
+    #         [
+    #             "OPENQASM 3;",
+    #             "include stdgates.inc;",
+    #             "qubit[2] q;",
+    #             "U(2*pi, 3*pi, -5*pi) q[0];",
+    #             "",
+    #         ]
+    #     )
+    #
+    #     from io import StringIO
+    #     io = StringIO()
+    #     json.dump(['streaming API'], io)
+    #     io.getvalue()
+    #     '["streaming API"]'
+    #     Exporter(circuit, disable_constants=True).dump()
+    #     result = io.getvalue()
+    #     self.assertEqual(result, expected_qasm)
 
 
 class TestCircuitQasm3(QiskitTestCase):
@@ -247,8 +292,8 @@ class TestCircuitQasm3(QiskitTestCase):
 
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
-    def test_pi(self):
-        """Test pi constant."""
+    def test_pi_disable_constants_false(self):
+        """Test pi constant (disable_constants=False)"""
         circuit = QuantumCircuit(2)
         circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
         expected_qasm = "\n".join(
@@ -260,7 +305,23 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit, allow_constants=True).dumps(), expected_qasm)
+        self.assertEqual(Exporter(circuit, disable_constants=False).dumps(), expected_qasm)
+
+    def test_pi_disable_constants_true(self):
+        """Test pi constant (disable_constants=True)"""
+        circuit = QuantumCircuit(2)
+        circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
+        expected_qasm = "\n".join(
+            [
+                "OPENQASM 3;",
+                "include stdgates.inc;",
+                "qubit[2] q;",
+                "U(6.283185307179586, 9.42477796076938, -15.707963267948966) q[0];",
+                "",
+            ]
+        )
+        self.assertEqual(Exporter(circuit, disable_constants=True).dumps(), expected_qasm)
+
 
     def test_from_qasm2_with_composite_circuit_with_one_param(self):
         """Test circuit from QASM2 with a parametrized custom gate."""
@@ -290,7 +351,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit, allow_constants=True).dumps(), expected_qasm)
+        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
     def test_from_qasm2_with_composite_circuit_with_three_param(self):
         """Test circuit from QASM2 with three parametrized custom gate."""
@@ -353,7 +414,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit, allow_constants=True).dumps(), expected_qasm)
+        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
     def test_unbound_circuit(self):
         """Test with unbound parameters (turning them into inputs)."""
@@ -467,7 +528,7 @@ class TestCircuitQasm3(QiskitTestCase):
             ]
         )
         self.assertEqual(
-            Exporter(circuit, includes=[], allow_constants=True).dumps(), expected_qasm
+            Exporter(circuit, includes=[]).dumps(), expected_qasm
         )
 
     def test_teleportation(self):
@@ -527,7 +588,7 @@ class TestCircuitQasm3(QiskitTestCase):
             ]
         )
         self.assertEqual(
-            Exporter(transpiled, includes=[], allow_constants=True).dumps(), expected_qasm
+            Exporter(transpiled, includes=[]).dumps(), expected_qasm
         )
 
     def test_basis_gates(self):
@@ -581,7 +642,7 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(
             Exporter(
-                transpiled, includes=[], allow_constants=True, basis_gates=["cx", "z", "U"]
+                transpiled, includes=[], basis_gates=["cx", "z", "U"]
             ).dumps(),
             expected_qasm,
         )

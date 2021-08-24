@@ -43,6 +43,6 @@ def dump(quantumcircuit, fp):
         quantumcircuit (QuantumCircuit): Circuit to serialize.
         fp (TextIOBase): Filepointer to dump the OpenQASM3 serialization
     """
-    exporter = Exporter(quantumcircuit)
+    exporter = Exporter(quantumcircuit).dump(fp)
     for line in exporter.dumps():
-        
+        pass
