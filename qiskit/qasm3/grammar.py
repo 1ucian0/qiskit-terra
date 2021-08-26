@@ -317,6 +317,23 @@ class QuantumDeclaration(Class):
         return [f"qubit{self.designator.qasm()} {self.identifier.qasm()};\n"]
 
 
+class AliasStatement(Class):
+    """
+    aliasStatement
+        : 'let' Identifier EQUALS indexIdentifier SEMICOLON
+    """
+
+    def __init__(self, identifier: Identifier, qubits: [IndexIdentifier2]):
+        self.identifier = identifier
+        self.qubits = qubits
+
+    def qasm(self):
+        return [
+            f"let {self.identifier.qasm()} = "
+            f"{' || '.join([ qubit.qasm() for qubit in self.qubits])};\n"
+        ]
+
+
 class QuantumGateCall(QuantumInstruction):
     """
     quantumGateCall

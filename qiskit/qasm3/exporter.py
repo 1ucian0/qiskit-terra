@@ -54,6 +54,7 @@ from qiskit.circuit.library.standard_gates import (
     U3Gate,
 )
 from qiskit.circuit.bit import Bit
+from qiskit.circuit import Qubit, Clbit
 from .grammar import (
     Program,
     Version,
@@ -86,8 +87,8 @@ from .grammar import (
     CalibrationDefinition,
     Input,
     PhysicalQubitIdentifier,
+    AliasStatement,
 )
-from qiskit.circuit import Qubit, Clbit
 
 
 class Exporter:
@@ -97,7 +98,7 @@ class Exporter:
         self,
         quantumcircuit,  # QuantumCircuit
         includes=None,  # list[filename:str]
-        basis_gates=["U"],
+        basis_gates=("U",),
         disable_constants=False,
     ):
         self.quantumcircuit = quantumcircuit
@@ -127,7 +128,9 @@ class Exporter:
     def qasm_tree(self):
         """Returns a Qasm3 AST"""
         return (
-            Qasm3Builder(self.quantumcircuit, self.includes, self.basis_gates, self.disable_constants)
+            Qasm3Builder(
+                self.quantumcircuit, self.includes, self.basis_gates, self.disable_constants
+            )
             .build_program()
             .qasm()
         )
@@ -172,7 +175,7 @@ class GlobalNamespace:
     }
     include_paths = [abspath(join(dirname(__file__), "..", "qasm", "libs"))]
 
-    def __init__(self, includelist, basis_gates=[]):
+    def __init__(self, includelist, basis_gates=()):
         self._data = {gate: None for gate in basis_gates}
 
         for includefile in includelist:
@@ -419,11 +422,43 @@ class Qasm3Builder:
             ret.append(BitDeclaration(Identifier(creg.name), Designator(Integer(creg.size))))
         return ret
 
+    @property
+    def base_register_name(self):
+        """The base register name"""
+        # name = self.circuit_ctx[-1].name
+        # allowed_chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        # name = ''.join(c for c in name if c in allowed_chars)
+        name = "_q"
+        if name in self.global_namespace._data:
+            raise NotImplementedError  # TODO choose a different name if there is a name collision
+        return name
+
     def build_quantumdeclarations(self):
-        """Builds a list of QuantumDeclaration"""
+        """Builds a single QuantumDeclaration for the base register and a list of aliases
+
+        The Base register name is the way the exporter handle registers.
+        All the qubits are part of a long flat register and the QuantumRegisters are aliases
+        """
         ret = []
+
+        # Base register
+        ret.append(
+            QuantumDeclaration(
+                Identifier(self.base_register_name),
+                Designator(Integer(self.circuit_ctx[-1].num_qubits)),
+            )
+        )
+        # aliases
         for qreg in self.circuit_ctx[-1].qregs:
-            ret.append(QuantumDeclaration(Identifier(qreg.name), Designator(Integer(qreg.size))))
+            qubits = []
+            for qubit in qreg:
+                qubits.append(
+                    IndexIdentifier2(
+                        Identifier(self.base_register_name),
+                        [Integer(self.circuit_ctx[-1].find_bit(qubit).index)],
+                    )
+                )
+            ret.append(AliasStatement(Identifier(qreg.name), qubits))
         return ret
 
     def build_quantuminstructions(self, instructions):
