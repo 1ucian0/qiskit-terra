@@ -324,7 +324,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "OPENQASM 3;",
                 "include stdgates.inc;",
                 "qubit[2] _q;",
-"let q = _q[0] || _q[1];",
+                "let q = _q[0] || _q[1];",
                 "U(6.283185307179586, 9.42477796076938, -15.707963267948966) q[0];",
                 "",
             ]
