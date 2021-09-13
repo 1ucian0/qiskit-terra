@@ -116,6 +116,12 @@ class Exporter:
         tree = self.qasm_tree()
         return self._flatten_tree(tree)
 
+    def dump(self, flo):
+        """TODO"""
+        tree = self.qasm_tree()
+        for chunk in self._flatten_tree(tree):
+            flo.write(chunk)
+
     def _flatten_tree(self, tree):
         """walks the AST to create a single string."""
         ret = ""

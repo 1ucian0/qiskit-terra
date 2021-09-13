@@ -42,28 +42,27 @@ class TestQasm3Functions(QiskitTestCase):
         result = dumps(self.circuit)
         self.assertEqual(result, self.expected_qasm)
 
-    # def test_dump(self):
-    #     """Test dump into an IO stream."""
-    #     circuit = QuantumCircuit(2)
-    #     circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
-    #     expected_qasm = "\n".join(
-    #         [
-    #             "OPENQASM 3;",
-    #             "include stdgates.inc;",
-    #             "qubit[2] q;",
-    #             "U(2*pi, 3*pi, -5*pi) q[0];",
-    #             "",
-    #         ]
-    #     )
-    #
-    #     from io import StringIO
-    #     io = StringIO()
-    #     json.dump(['streaming API'], io)
-    #     io.getvalue()
-    #     '["streaming API"]'
-    #     Exporter(circuit, disable_constants=True).dump()
-    #     result = io.getvalue()
-    #     self.assertEqual(result, expected_qasm)
+    def test_dump(self):
+        """Test dump into an IO stream."""
+        circuit = QuantumCircuit(2)
+        circuit.u(2 * pi, 3 * pi, -5 * pi, 0)
+        expected_qasm = "\n".join(
+            [
+                "OPENQASM 3;",
+                "include stdgates.inc;",
+                "qubit[2] _q;",
+                "let q = _q[0] || _q[1];",
+                "U(2*pi, 3*pi, -5*pi) q[0];",
+                "",
+            ]
+        )
+
+        from io import StringIO
+
+        io = StringIO()
+        Exporter(circuit).dump(io)
+        result = io.getvalue()
+        self.assertEqual(result, expected_qasm)
 
 
 class TestCircuitQasm3(QiskitTestCase):
