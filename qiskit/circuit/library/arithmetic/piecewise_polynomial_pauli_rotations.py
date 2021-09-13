@@ -262,12 +262,21 @@ class PiecewisePolynomialPauliRotations(FunctionalPauliRotations):
                 qr_ancilla = []
 
             self._qubits = qr_state[:] + qr_target[:] + qr_ancilla[:]
-            self._qubit_set = set(self._qubits)
             self._ancillas = qr_ancilla[:]
+
+            from qiskit.circuit.quantumcircuit import BitLocations
+
+            self._qubit_indices = {
+                bit: BitLocations(idx, []) for idx, bit in enumerate(self._qubits)
+            }
+            for reg in (qr_state, qr_target, qr_ancilla):
+                for reg_idx, bit in enumerate(reg):
+                    self._qubit_indices[bit][1].append((reg, reg_idx))
+
         else:
             self.qregs = []
             self._qubits = []
-            self._qubit_set = set()
+            self._qubit_indices = dict()
             self._ancillas = []
 
     def _build(self):

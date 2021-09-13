@@ -40,7 +40,7 @@ class BlueprintCircuit(QuantumCircuit, ABC):
         self._qregs = []
         self._cregs = []
         self._qubits = []
-        self._qubit_set = set()
+        self._qubit_indices = dict()
 
     @abstractmethod
     def _check_configuration(self, raise_on_failure: bool = True) -> bool:
@@ -84,7 +84,14 @@ class BlueprintCircuit(QuantumCircuit, ABC):
         """Set the quantum registers associated with the circuit."""
         self._qregs = qregs
         self._qubits = [qbit for qreg in qregs for qbit in qreg]
-        self._qubit_set = set(self._qubits)
+
+        from qiskit.circuit.quantumcircuit import BitLocations
+
+        self._qubit_indices = {bit: BitLocations(idx, []) for idx, bit in enumerate(self._qubits)}
+        for reg in qregs:
+            for reg_idx, bit in enumerate(reg):
+                self._qubit_indices[bit][1].append((reg, reg_idx))
+
         self._invalidate()
 
     @property
