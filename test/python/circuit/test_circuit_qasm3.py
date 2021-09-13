@@ -316,23 +316,23 @@ class TestCircuitQasm3(QiskitTestCase):
         """Test custom gate with unbound parameter."""
         parameter_a = Parameter("a")
 
-        custom = QuantumCircuit(1, name='custom')
+        custom = QuantumCircuit(1, name="custom")
         custom.rx(parameter_a, 0)
         circuit = QuantumCircuit(1)
         circuit.append(custom.to_gate(), [0])
 
         expected_qasm = "\n".join(
             [
-"OPENQASM 3;",
-"include stdgates.inc;",
-"gate custom(a) q_0 {",
-"rx(a) q_0;",
-"}",
-"input float[32] a;",
-"qubit[1] _q;",
-"let q = _q[0];",
-"custom(a) q[0];",
-"",
+                "OPENQASM 3;",
+                "include stdgates.inc;",
+                "gate custom(a) q_0 {",
+                "rx(a) q_0;",
+                "}",
+                "input float[32] a;",
+                "qubit[1] _q;",
+                "let q = _q[0];",
+                "custom(a) q[0];",
+                "",
             ]
         )
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
