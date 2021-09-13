@@ -312,33 +312,27 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(circuit, disable_constants=True).dumps(), expected_qasm)
 
-    def test_from_qasm2_with_composite_circuit_with_one_param(self):
-        """Test circuit from QASM2 with a parametrized custom gate."""
-        qasm2 = "\n".join(
-            [
-                "OPENQASM 2.0;",
-                'include "qelib1.inc";',
-                "gate nG0(param0) q0 { h q0; }",
-                "qreg q[3];",
-                "creg c[3];",
-                "nG0(pi) q[0];",
-                "",
-            ]
-        )
-        circuit = QuantumCircuit.from_qasm_str(qasm2)
-        definition_qubit_name = circuit.data[0][0].definition.qregs[0].name
+    def test_custom_gate_with_unbound_parameter(self):
+        """Test custom gate with unbound parameter."""
+        parameter_a = Parameter("a")
+
+        custom = QuantumCircuit(1, name='custom')
+        custom.rx(parameter_a, 0)
+        circuit = QuantumCircuit(1)
+        circuit.append(custom.to_gate(), [0])
+
         expected_qasm = "\n".join(
             [
-                "OPENQASM 3;",
-                "include stdgates.inc;",
-                f"gate nG0(param_0) {definition_qubit_name}_0 {{",
-                f"h {definition_qubit_name}_0;",
-                "}",
-                "bit[3] c;",
-                "qubit[3] _q;",
-                "let q = _q[0] || _q[1] || _q[2];",
-                "nG0(pi) q[0];",
-                "",
+"OPENQASM 3;",
+"include stdgates.inc;",
+"gate custom(a) q_0 {",
+"rx(a) q_0;",
+"}",
+"input float[32] a;",
+"qubit[1] _q;",
+"let q = _q[0];",
+"custom(a) q[0];",
+"",
             ]
         )
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
