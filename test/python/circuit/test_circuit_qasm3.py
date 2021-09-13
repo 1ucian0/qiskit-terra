@@ -74,21 +74,12 @@ class TestCircuitQasm3(QiskitTestCase):
         qr2 = QuantumRegister(2, "qr2")
         cr = ClassicalRegister(3, "cr")
         qc = QuantumCircuit(qr1, qr2, cr)
-        qc.p(0.3, qr1[0])
-        qc.u(0.3, 0.2, 0.1, qr2[1])
-        qc.s(qr2[1])
-        qc.sdg(qr2[1])
-        qc.cx(qr1[0], qr2[1])
-        qc.barrier(qr2)
-        qc.cx(qr2[1], qr1[0])
-        qc.h(qr2[1])
-        qc.x(qr2[1]).c_if(cr, 0)
-        qc.y(qr1[0]).c_if(cr, 1)
-        qc.z(qr1[0]).c_if(cr, 2)
-        qc.barrier(qr1, qr2)
         qc.measure(qr1[0], cr[0])
         qc.measure(qr2[0], cr[1])
         qc.measure(qr2[1], cr[2])
+        qc.x(qr2[1]).c_if(cr, 0)
+        qc.y(qr1[0]).c_if(cr, 1)
+        qc.z(qr1[0]).c_if(cr, 2)
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
@@ -97,14 +88,9 @@ class TestCircuitQasm3(QiskitTestCase):
                 "qubit[3] _q;",
                 "let qr1 = _q[0];",
                 "let qr2 = _q[1] || _q[2];",
-                "p(0.3) qr1[0];",
-                "U(0.3, 0.2, 0.1) qr2[1];",
-                "s qr2[1];",
-                "sdg qr2[1];",
-                "cx qr1[0], qr2[1];",
-                "barrier qr2[0], qr2[1];",
-                "cx qr2[1], qr1[0];",
-                "h qr2[1];",
+                "cr[0] = measure qr1[0];",
+                "cr[1] = measure qr2[0];",
+                "cr[2] = measure qr2[1];",
                 "if (cr == 0){",
                 "x qr2[1];",
                 "}",
@@ -114,10 +100,6 @@ class TestCircuitQasm3(QiskitTestCase):
                 "if (cr == 2){",
                 "z qr1[0];",
                 "}",
-                "barrier qr1[0], qr2[0], qr2[1];",
-                "cr[0] = measure qr1[0];",
-                "cr[1] = measure qr2[0];",
-                "cr[2] = measure qr2[1];",
                 "",
             ]
         )

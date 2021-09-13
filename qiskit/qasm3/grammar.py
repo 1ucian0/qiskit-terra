@@ -357,8 +357,8 @@ class QuantumGateCall(QuantumInstruction):
         if self.expressionList:
             return (
                 f"{name}"
-                "(" + ', '.join([e.qasm() for e in self.expressionList]) + ") "
-                "" + ', '.join([i.qasm() for i in self.indexIdentifierList]) + ";\n"
+                "(" + ", ".join([e.qasm() for e in self.expressionList]) + ") "
+                "" + ", ".join([i.qasm() for i in self.indexIdentifierList]) + ";\n"
             )
 
         return f"{name} " f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
