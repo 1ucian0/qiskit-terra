@@ -18,6 +18,7 @@ import copy
 import itertools
 import functools
 import multiprocessing as mp
+import string
 from collections import OrderedDict, defaultdict, namedtuple
 from typing import (
     Union,
@@ -33,8 +34,6 @@ from typing import (
     Set,
 )
 import typing
-import string
-
 import numpy as np
 from qiskit.exceptions import QiskitError, MissingOptionalLibraryError
 from qiskit.utils.multiprocessing import is_main_process
@@ -53,7 +52,7 @@ from .parametervector import ParameterVector, ParameterVectorElement
 from .instructionset import InstructionSet
 from .register import Register
 from .bit import Bit
-from .quantumcircuitdata import QuantumCircuitData, QuantumCircuitQregs, QuantumCircuitCregs
+from .quantumcircuitdata import QuantumCircuitData
 from .delay import Delay
 from .measure import Measure
 from .reset import Reset
@@ -69,6 +68,7 @@ except Exception:  # pylint: disable=broad-except
     HAS_PYGMENTS = False
 
 BitLocations = namedtuple("BitLocations", ("index", "registers"))
+
 
 # The following types are not marked private to avoid leaking this "private/public" abstraction out
 # into the documentation.  They are not imported by circuit.__init__, nor are they meant to be.
@@ -423,7 +423,7 @@ class QuantumCircuit:
                  └──────────┘
         """
         reverse_circ = QuantumCircuit(
-            self.qubits, self.clbits, *self._qregs, *self._cregs, name=self.name + "_reverse"
+            self.qubits, self.clbits, *self.qregs, *self.cregs, name=self.name + "_reverse"
         )
 
         for inst, qargs, cargs in reversed(self.data):
@@ -1244,26 +1244,6 @@ class QuantumCircuit:
                 return True
         return False
 
-    @property
-    def qregs(self):
-        """Returns a list of QuantumRegisters attached to the circuit."""
-        return QuantumCircuitQregs(self)
-
-    @qregs.setter
-    def qregs(self, regs):
-        self._qregs = []
-        self.add_register(*regs)
-
-    @property
-    def cregs(self):
-        """Returns a list of ClassicalRegisters attached to the circuit."""
-        return QuantumCircuitCregs(self)
-
-    @cregs.setter
-    def cregs(self, regs):
-        self._cregs = []
-        self.add_register(*regs)
-
     def add_register(self, *regs: Union[Register, int, Sequence[Bit]]) -> None:
         """Add registers."""
         if not regs:
@@ -1297,7 +1277,7 @@ class QuantumCircuit:
 
         for register in regs:
             if isinstance(register, Register) and any(
-                register.name == reg.name for reg in self.qregs + self.cregs if reg is not None
+                register.name == reg.name for reg in self.qregs + self.cregs
             ):
                 raise CircuitError('register name "%s" already exists' % register.name)
 
@@ -2070,8 +2050,8 @@ class QuantumCircuit:
         """
         cpy = copy.copy(self)
         # copy registers correctly, in copy.copy they are only copied via reference
-        cpy._qregs = self._qregs.copy()
-        cpy._cregs = self._cregs.copy()
+        cpy.qregs = self.qregs.copy()
+        cpy.cregs = self.cregs.copy()
         cpy._qubits = self._qubits.copy()
         cpy._ancillas = self._ancillas.copy()
         cpy._clbits = self._clbits.copy()
