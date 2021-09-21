@@ -337,8 +337,8 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
-    def test_from_qasm2_with_composite_circuit_with_three_param(self):
-        """Test circuit from QASM2 with three parametrized custom gate."""
+    def test_custom_gate_with_bound_parameter(self):
+        """Test custom gate with bound parameter."""
         parameter_a = Parameter("a")
 
         custom = QuantumCircuit(1)
@@ -364,39 +364,35 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
-    def test_from_qasm2_many_params_and_qubits(self):
-        """Test circuit from QASM2 with many parameters and qubits."""
+    def test_custom_gate_with_params_bound_main_call(self):
+        """Custom gate with unbound parameters that are bound in the main circuit"""
+        parameter0 = Parameter("param_0")
+        parameter1 = Parameter("param_1")
 
-        qasm2 = "\n".join(
-            [
-                "OPENQASM 2.0;",
-                'include "qelib1.inc";',
-                "gate nG0(param0,param1) q0,q1 { h q0; h q1; }",
-                "qreg q[3];",
-                "qreg r[3];",
-                "creg c[3];",
-                "creg d[3];",
-                "nG0(pi,pi/2) q[0],r[0];",
-                "",
-            ]
-        )
+        custom = QuantumCircuit(2, name='custom')
+        custom.rz(parameter0, 0)
+        custom.rz(parameter1, 1)
 
-        circuit = QuantumCircuit.from_qasm_str(qasm2)
+        qr_q = QuantumRegister(3, "q")
+        qr_r = QuantumRegister(3, "r")
+        circuit = QuantumCircuit(qr_q, qr_r)
+        circuit.append(custom.to_gate(), [qr_q[0], qr_r[0]])
+
+        circuit.assign_parameters({parameter0: pi, parameter1: pi / 2}, inplace=True)
+
         qubit_name = circuit.data[0][0].definition.qregs[0].name
         expected_qasm = "\n".join(
             [
                 "OPENQASM 3;",
                 "include stdgates.inc;",
-                f"gate nG0(param_0, param_1) {qubit_name}_0, {qubit_name}_1 {{",
-                f"h {qubit_name}_0;",
-                f"h {qubit_name}_1;",
+                f"gate custom(param_0, param_1) {qubit_name}_0, {qubit_name}_1 {{",
+                f"rz(pi) {qubit_name}_0;",
+                f"rz(pi/2) {qubit_name}_1;",
                 "}",
-                "bit[3] c;",
-                "bit[3] d;",
                 "qubit[6] _q;",
                 "let q = _q[0] || _q[1] || _q[2];",
                 "let r = _q[3] || _q[4] || _q[5];",
-                "nG0(pi, pi/2) q[0], r[0];",
+                "custom(pi, pi/2) q[0], r[0];",
                 "",
             ]
         )
