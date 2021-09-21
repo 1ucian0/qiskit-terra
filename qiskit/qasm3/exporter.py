@@ -127,10 +127,10 @@ class Exporter:
         ret = []
         for line in tree:
             if isinstance(line, str):
-                ret.append(line+'\n')
+                ret.append(line + "\n")
             else:
                 ret.append(self._flatten_tree(line))
-        return ''.join(ret)
+        return "".join(ret)
 
     def qasm_tree(self):
         """Returns a QASM3 in a tree of lines"""

@@ -524,13 +524,13 @@ class SubroutineDefinition(Statement):
     def qasm(self):
         ret = []
         if self.quantumArgumentList:
-             ret.append(
+            ret.append(
                 f"def {self.identifier.qasm()} "
                 f"{', '.join([i.qasm() for i in self.quantumArgumentList])} {{"
-             )
+            )
         else:
             ret.append(f"def {self.identifier.qasm()} {{")
-        return ret + [self.subroutineBlock.qasm()] + ['}']
+        return ret + [self.subroutineBlock.qasm()] + ["}"]
 
 
 class CalibrationArgument(ASTNode):
