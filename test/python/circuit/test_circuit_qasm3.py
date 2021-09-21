@@ -369,7 +369,7 @@ class TestCircuitQasm3(QiskitTestCase):
         parameter0 = Parameter("param_0")
         parameter1 = Parameter("param_1")
 
-        custom = QuantumCircuit(2, name='custom')
+        custom = QuantumCircuit(2, name="custom")
         custom.rz(parameter0, 0)
         custom.rz(parameter1, 1)
 
