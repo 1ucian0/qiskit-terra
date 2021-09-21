@@ -49,7 +49,7 @@ class Pragma(ASTNode):
         self.content = content
 
     def qasm(self):
-        return [f"#pragma {self.content};\n"]
+        return [f"#pragma {self.content};"]
 
 
 class CalibrationGrammarDeclaration(Statement):
@@ -62,7 +62,7 @@ class CalibrationGrammarDeclaration(Statement):
         self.name = name
 
     def qasm(self):
-        return [f"defcalgrammar {self.name.qasm()};\n"]
+        return [f"defcalgrammar {self.name.qasm()};"]
 
 
 class Program(ASTNode):
@@ -112,7 +112,7 @@ class Include(ASTNode):
         self.filename = filename
 
     def qasm(self):
-        return [f"include {self.filename};\n"]
+        return [f"include {self.filename};"]
 
 
 class Version(ASTNode):
@@ -125,7 +125,7 @@ class Version(ASTNode):
         self.version_number = version_number
 
     def qasm(self):
-        return [f"OPENQASM {self.version_number};\n"]
+        return [f"OPENQASM {self.version_number};"]
 
 
 class QuantumInstruction(ASTNode):
@@ -227,7 +227,7 @@ class QuantumMeasurement(ASTNode):
         self.indexIdentifierList = indexIdentifierList
 
     def qasm(self):
-        return f"measure {', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
+        return f"measure {', '.join([i.qasm() for i in self.indexIdentifierList])};"
 
 
 class QuantumMeasurementAssignment(Statement):
@@ -299,7 +299,7 @@ class BitDeclaration(ASTNode):
         self.equalsExpression = equalsExpression
 
     def qasm(self):
-        return [f"bit{self.designator.qasm()} {self.identifier.qasm()};\n"]
+        return [f"bit{self.designator.qasm()} {self.identifier.qasm()};"]
 
 
 class QuantumDeclaration(ASTNode):
@@ -314,7 +314,7 @@ class QuantumDeclaration(ASTNode):
         self.designator = designator
 
     def qasm(self):
-        return [f"qubit{self.designator.qasm()} {self.identifier.qasm()};\n"]
+        return [f"qubit{self.designator.qasm()} {self.identifier.qasm()};"]
 
 
 class AliasStatement(ASTNode):
@@ -330,7 +330,7 @@ class AliasStatement(ASTNode):
     def qasm(self):
         return [
             f"let {self.identifier.qasm()} = "
-            f"{' || '.join([ qubit.qasm() for qubit in self.qubits])};\n"
+            f"{' || '.join([ qubit.qasm() for qubit in self.qubits])};"
         ]
 
 
@@ -355,13 +355,13 @@ class QuantumGateCall(QuantumInstruction):
     def qasm(self):
         name = self.quantumGateName.qasm()
         if self.expressionList:
-            return (
+            return [
                 f"{name}"
                 "(" + ", ".join([e.qasm() for e in self.expressionList]) + ") "
-                "" + ", ".join([i.qasm() for i in self.indexIdentifierList]) + ";\n"
-            )
+                "" + ", ".join([i.qasm() for i in self.indexIdentifierList]) + ";"
+            ]
 
-        return f"{name} " f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
+        return [f"{name} " f"{', '.join([i.qasm() for i in self.indexIdentifierList])};"]
 
 
 class SubroutineCall(ExpressionTerminator):
@@ -382,16 +382,16 @@ class SubroutineCall(ExpressionTerminator):
 
     def qasm(self):
         if self.expressionList:
-            return (
+            return [
                 f"{self.identifier.qasm()} "
                 f"({', '.join([e.qasm() for e in self.expressionList])}) "
-                f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
-            )
+                f"{', '.join([i.qasm() for i in self.indexIdentifierList])};"
+            ]
 
-        return (
+        return [
             f"{self.identifier.qasm()} "
-            f"{', '.join([i.qasm() for i in self.indexIdentifierList])};\n"
-        )
+            f"{', '.join([i.qasm() for i in self.indexIdentifierList])};"
+        ]
 
 
 class QuantumBarrier(QuantumInstruction):
@@ -404,7 +404,7 @@ class QuantumBarrier(QuantumInstruction):
         self.indexIdentifierList = indexIdentifierList
 
     def qasm(self):
-        return [f'barrier {", ".join([i.qasm() for i in self.indexIdentifierList])};\n']
+        return [f'barrier {", ".join([i.qasm() for i in self.indexIdentifierList])};']
 
 
 class ProgramBlock(ASTNode):
@@ -418,7 +418,7 @@ class ProgramBlock(ASTNode):
         self.statements = statements
 
     def qasm(self):
-        return ["{\n"] + [stmt.qasm() for stmt in self.statements] + ["}\n"]
+        return [stmt.qasm() for stmt in self.statements]
 
 
 class ReturnStatement(ASTNode):  # TODO probably should be a subclass of ControlDirective
@@ -432,8 +432,8 @@ class ReturnStatement(ASTNode):  # TODO probably should be a subclass of Control
 
     def qasm(self):
         if self.expression:
-            return [f"return {self.expression.qasm()};\n"]
-        return ["return;\n"]
+            return [f"return {self.expression.qasm()};"]
+        return ["return;"]
 
 
 class QuantumBlock(ProgramBlock):
@@ -499,7 +499,7 @@ class QuantumGateDefinition(Statement):
         self.quantumBlock = quantumBlock
 
     def qasm(self):
-        return [f"gate {self.quantumGateSignature.qasm()} "] + self.quantumBlock.qasm()
+        return [f"gate {self.quantumGateSignature.qasm()} {{"] + [self.quantumBlock.qasm()] + ["}"]
 
 
 class SubroutineDefinition(Statement):
@@ -522,12 +522,15 @@ class SubroutineDefinition(Statement):
         self.classicalArgumentList = classicalArgumentList or []
 
     def qasm(self):
+        ret = []
         if self.quantumArgumentList:
-            return [
+             ret.append(
                 f"def {self.identifier.qasm()} "
-                f"{', '.join([i.qasm() for i in self.quantumArgumentList])} "
-            ] + self.subroutineBlock.qasm()
-        return [f"def {self.identifier.qasm()} "] + self.subroutineBlock.qasm()
+                f"{', '.join([i.qasm() for i in self.quantumArgumentList])} {{"
+             )
+        else:
+            ret.append(f"def {self.identifier.qasm()} {{")
+        return ret + [self.subroutineBlock.qasm()] + ['}']
 
 
 class CalibrationArgument(ASTNode):
@@ -570,7 +573,7 @@ class CalibrationDefinition(Statement):
         )
         block = self.block.qasm() if self.block else ["{}"]
 
-        return [f"defcal {name} {identifierList}{calibrationArgumentList}"] + block + ["\n"]
+        return [f"defcal {name} {identifierList}{calibrationArgumentList}"] + block
 
 
 class BooleanExpression(ASTNode):
@@ -644,10 +647,11 @@ class BranchingStatement(Statement):
         self.programFalse = programFalse
 
     def qasm(self):
-        ret = [f"if ({self.booleanExpression.qasm()})"] + self.programTrue.qasm()
+        ret = [f"if ({self.booleanExpression.qasm()}) {{"] + [self.programTrue.qasm()]
 
         if self.programFalse:
-            ret += ["else"] + self.programFalse.qasm()
+            ret += ["} else {"] + [self.programFalse.qasm()]
+        ret.append("}")
         return ret
 
 
@@ -659,4 +663,4 @@ class Input(ASTNode):
         self.variable = input_variable
 
     def qasm(self):
-        return [f"input {self.type.qasm()} {self.variable.qasm()};\n"]
+        return [f"input {self.type.qasm()} {self.variable.qasm()};"]

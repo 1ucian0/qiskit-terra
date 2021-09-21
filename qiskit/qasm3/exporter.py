@@ -124,15 +124,16 @@ class Exporter:
 
     def _flatten_tree(self, tree):
         """walks the AST to create a single string."""
-        ret = ""
-        if isinstance(tree, str):
-            return tree
-        for child in tree:
-            ret += self._flatten_tree(child)
-        return ret
+        ret = []
+        for line in tree:
+            if isinstance(line, str):
+                ret.append(line+'\n')
+            else:
+                ret.append(self._flatten_tree(line))
+        return ''.join(ret)
 
     def qasm_tree(self):
-        """Returns a Qasm3 AST"""
+        """Returns a QASM3 in a tree of lines"""
         return (
             Qasm3Builder(
                 self.quantumcircuit, self.includes, self.basis_gates, self.disable_constants
