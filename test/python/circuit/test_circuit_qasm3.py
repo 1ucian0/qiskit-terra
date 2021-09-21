@@ -371,7 +371,7 @@ class TestCircuitQasm3(QiskitTestCase):
 
         custom = QuantumCircuit(2, name="custom")
         custom.rz(parameter0, 0)
-        custom.rz(parameter1/2, 1)
+        custom.rz(parameter1 / 2, 1)
 
         qr_q = QuantumRegister(3, "q")
         qr_r = QuantumRegister(3, "r")
