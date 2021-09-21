@@ -398,6 +398,39 @@ class TestCircuitQasm3(QiskitTestCase):
         )
         self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
 
+    def test_reused_custom_gate_parameter(self):
+        """Test reused custom gate with parameter."""
+        parameter_a = Parameter("a")
+
+        custom = QuantumCircuit(1)
+        custom.rx(parameter_a, 0)
+
+        circuit = QuantumCircuit(1)
+        circuit.append(custom.bind_parameters({parameter_a: 0.5}).to_gate(), [0])
+        circuit.append(custom.bind_parameters({parameter_a: 1}).to_gate(), [0])
+
+        circuit_name_0 = circuit.data[0][0].definition.name
+        circuit_name_1 = circuit.data[1][0].definition.name
+
+        expected_qasm = "\n".join(
+            [
+                "OPENQASM 3;",
+                "include stdgates.inc;",
+                f"gate {circuit_name_0} q_0 {{",
+                "rx(0.5) q_0;",
+                "}",
+                f"gate {circuit_name_1} q_0 {{",
+                "rx(1) q_0;",
+                "}",
+                "qubit[1] _q;",
+                "let q = _q[0];",
+                f"{circuit_name_0} q[0];",
+                f"{circuit_name_1} q[0];",
+                "",
+            ]
+        )
+        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
+
     def test_unbound_circuit(self):
         """Test with unbound parameters (turning them into inputs)."""
         qc = QuantumCircuit(1)
