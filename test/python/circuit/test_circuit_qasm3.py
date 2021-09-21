@@ -371,7 +371,7 @@ class TestCircuitQasm3(QiskitTestCase):
 
         custom = QuantumCircuit(2, name="custom")
         custom.rz(parameter0, 0)
-        custom.rz(parameter1, 1)
+        custom.rz(parameter1/2, 1)
 
         qr_q = QuantumRegister(3, "q")
         qr_r = QuantumRegister(3, "r")
@@ -387,7 +387,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "include stdgates.inc;",
                 f"gate custom(param_0, param_1) {qubit_name}_0, {qubit_name}_1 {{",
                 f"rz(pi) {qubit_name}_0;",
-                f"rz(pi/2) {qubit_name}_1;",
+                f"rz(pi/4) {qubit_name}_1;",
                 "}",
                 "qubit[6] _q;",
                 "let q = _q[0] || _q[1] || _q[2];",
