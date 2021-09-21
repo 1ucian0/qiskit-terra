@@ -15,7 +15,7 @@
 """QASM3 AST Nodes"""
 
 
-class Class:
+class ASTNode:
     """Base abstract class for AST notes"""
 
     def qasm(self):
@@ -23,7 +23,7 @@ class Class:
         raise NotImplementedError(self)
 
 
-class Statement(Class):
+class Statement(ASTNode):
     """
     statement
         : expressionStatement
@@ -39,7 +39,7 @@ class Statement(Class):
     pass
 
 
-class Pragma(Class):
+class Pragma(ASTNode):
     """
     pragma
         : '#pragma' LBRACE statement* RBRACE  // match any valid openqasm statement
@@ -65,7 +65,7 @@ class CalibrationGrammarDeclaration(Statement):
         return [f"defcalgrammar {self.name.qasm()};\n"]
 
 
-class Program(Class):
+class Program(ASTNode):
     """
     program
         : header (globalStatement | statement)*
@@ -85,7 +85,7 @@ class Program(Class):
         return ret
 
 
-class Header(Class):
+class Header(ASTNode):
     """
     header
         : version? include*
@@ -102,7 +102,7 @@ class Header(Class):
         return ret
 
 
-class Include(Class):
+class Include(ASTNode):
     """
     include
         : 'include' StringLiteral SEMICOLON
@@ -115,7 +115,7 @@ class Include(Class):
         return [f"include {self.filename};\n"]
 
 
-class Version(Class):
+class Version(ASTNode):
     """
     version
         : 'OPENQASM'(Integer | RealNumber) SEMICOLON
@@ -128,7 +128,7 @@ class Version(Class):
         return [f"OPENQASM {self.version_number};\n"]
 
 
-class QuantumInstruction(Class):
+class QuantumInstruction(ASTNode):
     """
     quantumInstruction
         : quantumGateCall
@@ -145,7 +145,7 @@ class QuantumInstruction(Class):
         raise NotImplementedError
 
 
-class Identifier(Class):
+class Identifier(ASTNode):
     """
     Identifier : FirstIdCharacter GeneralIdCharacter* ;
     """
@@ -180,7 +180,7 @@ class IndexIdentifier(Identifier):
     pass
 
 
-class Expression(Class):
+class Expression(ASTNode):
     """
     expression
         // include terminator/unary as base cases to simplify parsing
@@ -217,7 +217,7 @@ class IndexIdentifier2(IndexIdentifier):
             return f"{self.identifier.qasm()}"
 
 
-class QuantumMeasurement(Class):
+class QuantumMeasurement(ASTNode):
     """
     quantumMeasurement
         : 'measure' indexIdentifierList
@@ -273,7 +273,7 @@ class Integer(Expression):
         return str(int(self.something))
 
 
-class Designator(Class):
+class Designator(ASTNode):
     """
     designator
         : LBRACKET expression RBRACKET
@@ -286,7 +286,7 @@ class Designator(Class):
         return f"[{self.expression.qasm()}]"
 
 
-class BitDeclaration(Class):
+class BitDeclaration(ASTNode):
     """
     bitDeclaration
         : ( 'creg' Identifier designator? |   # NOT SUPPORTED
@@ -302,7 +302,7 @@ class BitDeclaration(Class):
         return [f"bit{self.designator.qasm()} {self.identifier.qasm()};\n"]
 
 
-class QuantumDeclaration(Class):
+class QuantumDeclaration(ASTNode):
     """
     quantumDeclaration
         : 'qreg' Identifier designator? |   # NOT SUPPORTED
@@ -317,7 +317,7 @@ class QuantumDeclaration(Class):
         return [f"qubit{self.designator.qasm()} {self.identifier.qasm()};\n"]
 
 
-class AliasStatement(Class):
+class AliasStatement(ASTNode):
     """
     aliasStatement
         : 'let' Identifier EQUALS indexIdentifier SEMICOLON
@@ -407,7 +407,7 @@ class QuantumBarrier(QuantumInstruction):
         return [f'barrier {", ".join([i.qasm() for i in self.indexIdentifierList])};\n']
 
 
-class ProgramBlock(Class):
+class ProgramBlock(ASTNode):
     """
     programBlock
         : statement | controlDirective
@@ -421,7 +421,7 @@ class ProgramBlock(Class):
         return ["{\n"] + [stmt.qasm() for stmt in self.statements] + ["}\n"]
 
 
-class ReturnStatement(Class):  # TODO probably should be a subclass of ControlDirective
+class ReturnStatement(ASTNode):  # TODO probably should be a subclass of ControlDirective
     """
     returnStatement
         : 'return' ( expression | quantumMeasurement )? SEMICOLON;
@@ -468,7 +468,7 @@ class QuantumArgument(QuantumDeclaration):
             return f"qubit {self.identifier.qasm()}"
 
 
-class QuantumGateSignature(Class):
+class QuantumGateSignature(ASTNode):
     """
     quantumGateSignature
         : quantumGateName ( LPAREN identifierList? RPAREN )? identifierList
@@ -530,7 +530,7 @@ class SubroutineDefinition(Statement):
         return [f"def {self.identifier.qasm()} "] + self.subroutineBlock.qasm()
 
 
-class CalibrationArgument(Class):
+class CalibrationArgument(ASTNode):
     """
     calibrationArgumentList
         : classicalArgumentList | expressionList
@@ -573,7 +573,7 @@ class CalibrationDefinition(Statement):
         return [f"defcal {name} {identifierList}{calibrationArgumentList}"] + block + ["\n"]
 
 
-class BooleanExpression(Class):
+class BooleanExpression(ASTNode):
     """
     programBlock
         : statement | controlDirective
@@ -584,7 +584,7 @@ class BooleanExpression(Class):
         pass
 
 
-class RelationalOperator(Class):
+class RelationalOperator(ASTNode):
     """Relational operator"""
 
     def qasm(self):
@@ -651,7 +651,7 @@ class BranchingStatement(Statement):
         return ret
 
 
-class Input(Class):
+class Input(ASTNode):
     """UNDEFINED in the grammar yet"""
 
     def __init__(self, input_type, input_variable):
