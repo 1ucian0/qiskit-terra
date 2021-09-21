@@ -16,7 +16,7 @@
 
 
 class Class:
-    """Base abstract class for AST notes"""
+    """Base abstract class for AST nodes"""
 
     def qasm(self):
         """Unparses the node"""
