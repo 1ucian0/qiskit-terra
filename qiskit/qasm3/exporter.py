@@ -432,9 +432,6 @@ class Qasm3Builder:
     @property
     def base_register_name(self):
         """The base register name"""
-        # name = self.circuit_ctx[-1].name
-        # allowed_chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        # name = ''.join(c for c in name if c in allowed_chars)
         name = "_q"
         if name in self.global_namespace._data:
             raise NotImplementedError  # TODO choose a different name if there is a name collision
