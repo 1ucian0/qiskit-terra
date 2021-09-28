@@ -244,7 +244,7 @@ class QuantumCircuit:
         self._clbits = []
 
         # Dict mapping Qubt or Clbit instances to tuple comprised of 0) the
-        # corresponding index in circuit.{qubits,clbits} and a list of
+        # corresponding index in circuit.{qubits,clbits} and 1) a list of
         # Register-int pairs for each Register containing the Bit and its index
         # within that register.
         self._qubit_indices = dict()
@@ -1289,7 +1289,7 @@ class QuantumCircuit:
 
                 for idx, bit in enumerate(register):
                     if bit in self._qubit_indices:
-                        self._qubit_indices[bit][1].append((register, idx))
+                        self._qubit_indices[bit].registers.append((register, idx))
                     else:
                         self._qubits.append(bit)
                         self._qubit_indices[bit] = BitLocations(
@@ -1301,7 +1301,7 @@ class QuantumCircuit:
 
                 for idx, bit in enumerate(register):
                     if bit in self._clbit_indices:
-                        self._clbit_indices[bit][1].append((register, idx))
+                        self._clbit_indices[bit].registers.append((register, idx))
                     else:
                         self._clbits.append(bit)
                         self._clbit_indices[bit] = BitLocations(
@@ -1322,7 +1322,6 @@ class QuantumCircuit:
         for bit in bits:
             if isinstance(bit, AncillaQubit):
                 self._ancillas.append(bit)
-                self._qubit_indices[bit] = BitLocations(len(self._ancillas) - 1, [])
             if isinstance(bit, Qubit):
                 self._qubits.append(bit)
                 self._qubit_indices[bit] = BitLocations(len(self._qubits) - 1, [])
@@ -1335,30 +1334,31 @@ class QuantumCircuit:
                     "AncillaQubit, but was passed {}".format(bit)
                 )
 
-    def find_bit(self, bit):
-        """Find locations in the circuit which can be used to reference a given Bit.
+    def find_bit(self, bit: Bit) -> BitLocations:
+        """Find locations in the circuit which can be used to reference a given :obj:`~Bit`.
 
         Args:
             bit (Bit): The bit to locate.
 
         Returns:
-            namedtuple(int, List[Tuple(Register, Int)]): A 2-tuple. The first element
-               (index) contains the index at which the Bit can be found (in either
-               `.qubits`, `.clbits`, depending on its type). The second element (registers)
-               is a list of Register-index pairs with an entry for each Register
-               in the circuit which contains the Bit (and the index in the
-               Register at which it can be found).
+            namedtuple(int, List[Tuple(Register, int)]): A 2-tuple. The first element (``index``)
+                contains the index at which the ``Bit`` can be found (in either
+                :obj:`~QuantumCircuit.qubits`, :obj:`~QuantumCircuit.clbits`, depending on its
+                type). The second element (``registers``) is a list of ``(register, index)``
+                pairs with an entry for each :obj:`~Register` in the circuit which contains the
+                :obj:`~Bit` (and the index in the :obj:`~Register` at which it can be found).
 
-        Note: The circuit index of an AncillaQubit will be its index
-            QuantumCircuit.qubits, not QuantumCircuit.ancilla.
+        Notes:
+            The circuit index of an :obj:`~AncillaQubit` will be its index in
+            :obj:`~QuantumCircuit.qubits`, not :obj:`~QuantumCircuit.ancillas`.
 
         Raises:
-            CircuitError: If the supplied Bit was of an unknown type.
-            CircuitError: If the supplied Bit could not be found on the circuit.
+            CircuitError: If the supplied :obj:`~Bit` was of an unknown type.
+            CircuitError: If the supplied :obj:`~Bit` could not be found on the circuit.
         """
 
         try:
-            if isinstance(bit, (Qubit, AncillaQubit)):
+            if isinstance(bit, Qubit):
                 return self._qubit_indices[bit]
             elif isinstance(bit, Clbit):
                 return self._clbit_indices[bit]
