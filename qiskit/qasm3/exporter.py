@@ -16,6 +16,7 @@
 
 import io
 from os.path import dirname, join, abspath, exists
+from typing import Sequence
 
 from qiskit.circuit.tools import pi_check
 from qiskit.circuit import Gate, Barrier, Measure, QuantumRegister, Instruction
@@ -99,35 +100,39 @@ class Exporter:
 
     def __init__(
         self,
-        includes=None,  # list[filename:str]
-        basis_gates=("U",),
-        disable_constants=False,
+        includes: Sequence[str] = ("stdgates.inc",),
+        basis_gates: Sequence[str] = ("U",),
+        disable_constants: bool = False,
+        indent: str = "  ",
     ):
+        """
+        Args:
+            includes: the filenames that should be emitted as includes.  These files will be parsed
+                for gates, and any objects dumped from this exporter will use those definitions
+                where possible.
+            basis_gates: the basic defined gate set of the backend.
+            disable_constants: if ``True``, always emit floating-point constants for numeric
+                parameter values.  If ``False`` (the default), then values close to multiples of
+                QASM 3 constants (``pi``, ``euler``, and ``tau``) will be emitted in terms of those
+                constants instead, potentially improving accuracy in the output.
+            indent: the indentation string to use for each level within an indented block.  Can be
+                set to the empty string to disable indentation.
+        """
         self.basis_gates = basis_gates
         self.disable_constants = disable_constants
-        if includes is None:
-            self.includes = ["stdgates.inc"]
-        elif isinstance(includes, str):
-            self.includes = [includes]
-        else:
-            self.includes = includes
+        self.includes = list(includes)
+        self.indent = indent
 
-    def dumps(self, circuit, indent="  "):
+    def dumps(self, circuit):
         """Convert the circuit to QASM 3, returning the result as a string."""
         with io.StringIO() as stream:
-            self.dump(circuit, stream, indent=indent)
+            self.dump(circuit, stream)
             return stream.getvalue()
 
-    def dump(self, circuit, stream, indent="  "):
+    def dump(self, circuit, stream):
         """Convert the circuit to QASM 3, dumping the result to a file or text stream."""
-        printer = BasicPrinter(stream, indent=indent)
-        printer.visit(self.qasm_tree(circuit))
-
-    def qasm_tree(self, circuit):
-        """Returns a QASM3 in a tree of lines"""
-        return Qasm3Builder(
-            circuit, self.includes, self.basis_gates, self.disable_constants
-        ).build_program()
+        builder = Qasm3Builder(circuit, self.includes, self.basis_gates, self.disable_constants)
+        BasicPrinter(stream, indent=self.indent).visit(builder.build_program())
 
 
 class GlobalNamespace:
