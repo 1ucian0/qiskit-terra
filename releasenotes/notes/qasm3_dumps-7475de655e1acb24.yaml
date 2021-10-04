@@ -5,7 +5,7 @@ features:
 
     .. jupyter-execute::
 
-            from qiskit import QuantumCircuit
+            from qiskit.circuit import QuantumCircuit, QuantumRegister, ClassicalRegister
             from qiskit import qasm3
 
             qc = QuantumCircuit(2)
