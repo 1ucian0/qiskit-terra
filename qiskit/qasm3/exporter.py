@@ -96,12 +96,10 @@ class Exporter:
 
     def __init__(
         self,
-        quantumcircuit,  # QuantumCircuit
         includes=None,  # list[filename:str]
         basis_gates=("U",),
         disable_constants=False,
     ):
-        self.quantumcircuit = quantumcircuit
         self.basis_gates = basis_gates
         self.disable_constants = disable_constants
         if includes is None:
@@ -111,14 +109,14 @@ class Exporter:
         else:
             self.includes = includes
 
-    def dumps(self):
+    def dumps(self, quantumcircuit):
         """Returns the QASM3 string."""
-        tree = self.qasm_tree()
+        tree = self.qasm_tree(quantumcircuit)
         return self._flatten_tree(tree)
 
-    def dump(self, flo):
+    def dump(self, quantumcircuit, flo):
         """TODO"""
-        tree = self.qasm_tree()
+        tree = self.qasm_tree(quantumcircuit)
         for chunk in self._flatten_tree(tree):
             flo.write(chunk)
 
@@ -132,12 +130,10 @@ class Exporter:
                 ret.append(self._flatten_tree(line))
         return "".join(ret)
 
-    def qasm_tree(self):
+    def qasm_tree(self, quantumcircuit):
         """Returns a QASM3 in a tree of lines"""
         return (
-            Qasm3Builder(
-                self.quantumcircuit, self.includes, self.basis_gates, self.disable_constants
-            )
+            Qasm3Builder(quantumcircuit, self.includes, self.basis_gates, self.disable_constants)
             .build_program()
             .qasm()
         )

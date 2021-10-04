@@ -60,7 +60,7 @@ class TestQasm3Functions(QiskitTestCase):
         from io import StringIO
 
         io = StringIO()
-        Exporter(circuit).dump(io)
+        Exporter().dump(circuit, io)
         result = io.getvalue()
         self.assertEqual(result, expected_qasm)
 
@@ -103,7 +103,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(qc).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(qc), expected_qasm)
 
     def test_composite_circuit(self):
         """Test with a composite circuit instruction and barriers"""
@@ -145,7 +145,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(qc).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(qc), expected_qasm)
 
     def test_custom_gate(self):
         """Test custom gates (via to_gate)."""
@@ -186,7 +186,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(qc).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(qc), expected_qasm)
 
     def test_same_composite_circuits(self):
         """Test when a composite circuit is added to the circuit multiple times."""
@@ -230,7 +230,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(qc).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(qc), expected_qasm)
 
     def test_composite_circuits_with_same_name(self):
         """Test when multiple composite circuit instructions same name and different implementation"""
@@ -278,7 +278,7 @@ class TestCircuitQasm3(QiskitTestCase):
             ]
         )
 
-        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(circuit), expected_qasm)
 
     def test_pi_disable_constants_false(self):
         """Test pi constant (disable_constants=False)"""
@@ -294,7 +294,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit, disable_constants=False).dumps(), expected_qasm)
+        self.assertEqual(Exporter(disable_constants=False).dumps(circuit), expected_qasm)
 
     def test_pi_disable_constants_true(self):
         """Test pi constant (disable_constants=True)"""
@@ -310,7 +310,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit, disable_constants=True).dumps(), expected_qasm)
+        self.assertEqual(Exporter(disable_constants=True).dumps(circuit), expected_qasm)
 
     def test_custom_gate_with_unbound_parameter(self):
         """Test custom gate with unbound parameter."""
@@ -335,7 +335,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(circuit), expected_qasm)
 
     def test_custom_gate_with_bound_parameter(self):
         """Test custom gate with bound parameter."""
@@ -362,7 +362,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(circuit), expected_qasm)
 
     def test_custom_gate_with_params_bound_main_call(self):
         """Custom gate with unbound parameters that are bound in the main circuit"""
@@ -396,7 +396,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(circuit), expected_qasm)
 
     def test_reused_custom_gate_parameter(self):
         """Test reused custom gate with parameter."""
@@ -429,7 +429,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(circuit), expected_qasm)
 
     def test_unbound_circuit(self):
         """Test with unbound parameters (turning them into inputs)."""
@@ -447,7 +447,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(qc).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(qc), expected_qasm)
 
     def test_gate_qasm_with_ctrl_state(self):
         """Test with open controlled gate that has ctrl_state"""
@@ -470,7 +470,7 @@ class TestCircuitQasm3(QiskitTestCase):
             ]
         )
 
-        self.assertEqual(Exporter(qc).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(qc), expected_qasm)
 
     def test_custom_gate_collision_with_stdlib(self):
         """Test a custom gate with name collision with the standard library."""
@@ -494,7 +494,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(qc).dumps(), expected_qasm)
+        self.assertEqual(Exporter().dumps(qc), expected_qasm)
 
     def test_no_include(self):
         """Test explicit gate declaration (no include)"""
@@ -547,7 +547,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(circuit, includes=[]).dumps(), expected_qasm)
+        self.assertEqual(Exporter(includes=[]).dumps(circuit), expected_qasm)
 
     def test_teleportation(self):
         """Teleportation with physical qubits"""
@@ -606,7 +606,7 @@ class TestCircuitQasm3(QiskitTestCase):
                 "",
             ]
         )
-        self.assertEqual(Exporter(transpiled, includes=[]).dumps(), expected_qasm)
+        self.assertEqual(Exporter(includes=[]).dumps(transpiled), expected_qasm)
 
     def test_basis_gates(self):
         """Teleportation with physical qubits"""
@@ -658,6 +658,6 @@ class TestCircuitQasm3(QiskitTestCase):
             ]
         )
         self.assertEqual(
-            Exporter(transpiled, includes=[], basis_gates=["cx", "z", "U"]).dumps(),
+            Exporter(includes=[], basis_gates=["cx", "z", "U"]).dumps(transpiled),
             expected_qasm,
         )

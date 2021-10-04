@@ -31,8 +31,8 @@ def dumps(quantumcircuit):
     Returns:
         str: The OpenQASM3 serialization
     """
-    exporter = Exporter(quantumcircuit)
-    return exporter.dumps()
+    exporter = Exporter()
+    return exporter.dumps(quantumcircuit)
 
 
 def dump(quantumcircuit, flo):
@@ -43,4 +43,4 @@ def dump(quantumcircuit, flo):
         quantumcircuit (QuantumCircuit): Circuit to serialize.
         flo (TextIOBase): file-like object to dump the OpenQASM3 serialization
     """
-    Exporter(quantumcircuit).dump(flo)
+    Exporter().dump(quantumcircuit, flo)
