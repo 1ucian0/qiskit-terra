@@ -73,13 +73,13 @@ cr[0] = measure qr1[0];
 cr[1] = measure qr2[0];
 cr[2] = measure qr2[1];
 if (cr == 0) {
-x qr2[1];
+  x qr2[1];
 }
 if (cr == 1) {
-y qr1[0];
+  y qr1[0];
 }
 if (cr == 2) {
-z qr1[0];
+  z qr1[0];
 }
 """
         self.assertEqual(Exporter().dumps(qc), expected_qasm)
@@ -105,10 +105,9 @@ z qr1[0];
         expected_qasm = """OPENQASM 3;
 include "stdgates.inc";
 def composite_circ(qubit q_0, qubit q_1) {
-h q_0;
-x q_1;
-cx q_0, q_1;
-return;
+  h q_0;
+  x q_1;
+  cx q_0, q_1;
 }
 bit[2] cr;
 qubit[2] _q;
@@ -120,7 +119,7 @@ composite_circ qr[0], qr[1];
 cr[0] = measure qr[0];
 cr[1] = measure qr[1];
 """
-        self.assertEqual(Exporter().dumps(qc).strip(), expected_qasm)
+        self.assertEqual(Exporter().dumps(qc), expected_qasm)
 
     def test_custom_gate(self):
         """Test custom gates (via to_gate)."""
@@ -143,9 +142,9 @@ cr[1] = measure qr[1];
         expected_qasm = """OPENQASM 3;
 include "stdgates.inc";
 gate composite_circ q_0, q_1 {
-h q_0;
-x q_1;
-cx q_0, q_1;
+  h q_0;
+  x q_1;
+  cx q_0, q_1;
 }
 bit[2] cr;
 qubit[2] _q;
@@ -181,10 +180,9 @@ cr[1] = measure qr[1];
         expected_qasm = """OPENQASM 3;
 include "stdgates.inc";
 def composite_circ(qubit q_0, qubit q_1) {
-h q_0;
-x q_1;
-cx q_0, q_1;
-return;
+  h q_0;
+  x q_1;
+  cx q_0, q_1;
 }
 bit[2] cr;
 qubit[2] _q;
@@ -223,16 +221,13 @@ cr[1] = measure qr[1];
         expected_qasm = f"""OPENQASM 3;
 include "stdgates.inc";
 def my_gate(qubit q_0) {{
-h q_0;
-return;
+  h q_0;
 }}
 def my_gate_{my_gate_inst2_id}(qubit q_0) {{
-x q_0;
-return;
+  x q_0;
 }}
 def my_gate_{my_gate_inst3_id}(qubit q_0) {{
-x q_0;
-return;
+  x q_0;
 }}
 qubit[1] _q;
 let qr = _q[0];
@@ -278,7 +273,7 @@ U(6.283185307179586, 9.42477796076938, -15.707963267948966) q[0];
         expected_qasm = """OPENQASM 3;
 include "stdgates.inc";
 gate custom(a) q_0 {
-rx(a) q_0;
+  rx(a) q_0;
 }
 input float[32] a;
 qubit[1] _q;
@@ -302,7 +297,7 @@ custom(a) q[0];
         expected_qasm = """OPENQASM 3;
 include "stdgates.inc";
 gate custom q_0 {
-rx(0.5) q_0;
+  rx(0.5) q_0;
 }
 qubit[1] _q;
 let q = _q[0];
@@ -327,11 +322,11 @@ custom q[0];
         circuit.assign_parameters({parameter0: pi, parameter1: pi / 2}, inplace=True)
 
         qubit_name = circuit.data[0][0].definition.qregs[0].name
-        expected_qasm = """OPENQASM 3;
+        expected_qasm = f"""OPENQASM 3;
 include "stdgates.inc";
 gate custom(param_0, param_1) {qubit_name}_0, {qubit_name}_1 {{
-rz(pi) {qubit_name}_0;
-rz(pi/4) {qubit_name}_1;
+  rz(pi) {qubit_name}_0;
+  rz(pi/4) {qubit_name}_1;
 }}
 qubit[6] _q;
 let q = _q[0] || _q[1] || _q[2];
@@ -354,13 +349,13 @@ custom(pi, pi/2) q[0], r[0];
         circuit_name_0 = circuit.data[0][0].definition.name
         circuit_name_1 = circuit.data[1][0].definition.name
 
-        expected_qasm = """OPENQASM 3;
+        expected_qasm = f"""OPENQASM 3;
 include "stdgates.inc";
 gate {circuit_name_0} q_0 {{
-rx(0.5) q_0;
+  rx(0.5) q_0;
 }}
 gate {circuit_name_1} q_0 {{
-rx(1) q_0;
+  rx(1) q_0;
 }}
 qubit[1] _q;
 let q = _q[0];
@@ -391,9 +386,9 @@ rz(θ) q[0];
         expected_qasm = """OPENQASM 3;
 include "stdgates.inc";
 gate ch_o0 q_0, q_1 {
-x q_0;
-ch q_0, q_1;
-x q_0;
+  x q_0;
+  ch q_0, q_1;
+  x q_0;
 }
 qubit[2] _q;
 let q = _q[0] || _q[1];
@@ -410,10 +405,10 @@ ch_o0 q[0], q[1];
         qc = QuantumCircuit(2)
         qc.append(custom_gate, [0, 1])
         custom_gate_id = id(qc.data[-1][0])
-        expected_qasm = """OPENQASM 3;
+        expected_qasm = f"""OPENQASM 3;
 include "stdgates.inc";
 gate cx_{custom_gate_id} q_0, q_1 {{
-cx q_0, q_1;
+  cx q_0, q_1;
 }}
 qubit[2] _q;
 let q = _q[0] || _q[1];
@@ -433,29 +428,31 @@ cx_{custom_gate_id} q[0], q[1];
         circuit.measure(q[0], qc[0])
         circuit.measure(q[1], qc[1])
         expected_qasm = """OPENQASM 3;
-gate cx c, t {ctrl @ U(pi, 0, pi) c, t}
+gate cx c, t {
+  ctrl @ U(pi, 0, pi) c, t;
+}
 gate u3(param_0, param_1, param_2) q_0 {
-U(0, 0, pi/2) q_0;
+  U(0, 0, pi/2) q_0;
 }
 gate u1(param_0) q_0 {
-u3(0, 0, pi/2) q_0;
+  u3(0, 0, pi/2) q_0;
 }
 gate rz(param_0) q_0 {
-u1(pi/2) q_0;
+  u1(pi/2) q_0;
 }
 gate sdg q_0 {
-u1(-pi/2) q_0;
+  u1(-pi/2) q_0;
 }
 gate u2(param_0, param_1) q_0 {
-u3(pi/2, 0, pi) q_0;
+  u3(pi/2, 0, pi) q_0;
 }
 gate h q_0 {
-u2(0, pi) q_0;
+  u2(0, pi) q_0;
 }
 gate sx q_0 {
-sdg q_0;
-h q_0;
-sdg q_0;
+  sdg q_0;
+  h q_0;
+  sdg q_0;
 }
 bit[2] qc;
 qubit[5] _q;
@@ -485,24 +482,26 @@ qc[1] = measure q[1];
 
         transpiled = transpile(qc, initial_layout=[0, 1, 2])
         expected_qasm = """OPENQASM 3;
-gate cx c, t {ctrl @ U(pi, 0, pi) c, t}
+gate cx c, t {
+  ctrl @ U(pi, 0, pi) c, t;
+}
 gate u3(param_0, param_1, param_2) q_0 {
-U(pi/2, 0, pi) q_0;
+  U(pi/2, 0, pi) q_0;
 }
 gate u2(param_0, param_1) q_0 {
-u3(pi/2, 0, pi) q_0;
+  u3(pi/2, 0, pi) q_0;
 }
 gate h q_0 {
-u2(0, pi) q_0;
+  u2(0, pi) q_0;
 }
 gate x q_0 {
-u3(pi, 0, pi) q_0;
+  u3(pi, 0, pi) q_0;
 }
 gate u1(param_0) q_0 {
-u3(0, 0, pi) q_0;
+  u3(0, 0, pi) q_0;
 }
 gate z q_0 {
-u1(pi) q_0;
+  u1(pi) q_0;
 }
 bit[2] c;
 h $1;
@@ -515,10 +514,10 @@ c[0] = measure $0;
 c[1] = measure $1;
 barrier $0, $1, $2;
 if (c[1] == 1) {
-x $2;
+  x $2;
 }
 if (c[0] == 1) {
-z $2;
+  z $2;
 }
 """
         self.assertEqual(Exporter(includes=[]).dumps(transpiled), expected_qasm)
@@ -540,16 +539,16 @@ z $2;
         transpiled = transpile(qc, initial_layout=[0, 1, 2])
         expected_qasm = """OPENQASM 3;
 gate u3(param_0, param_1, param_2) q_0 {
-U(pi/2, 0, pi) q_0;
+  U(pi/2, 0, pi) q_0;
 }
 gate u2(param_0, param_1) q_0 {
-u3(pi/2, 0, pi) q_0;
+  u3(pi/2, 0, pi) q_0;
 }
 gate h q_0 {
-u2(0, pi) q_0;
+  u2(0, pi) q_0;
 }
 gate x q_0 {
-u3(pi, 0, pi) q_0;
+  u3(pi, 0, pi) q_0;
 }
 bit[2] c;
 h $1;
@@ -562,10 +561,10 @@ c[0] = measure $0;
 c[1] = measure $1;
 barrier $0, $1, $2;
 if (c[1] == 1) {
-x $2;
+  x $2;
 }
 if (c[0] == 1) {
-z $2;
+  z $2;
 }
 """
         self.assertEqual(

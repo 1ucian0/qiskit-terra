@@ -56,7 +56,7 @@ from qiskit.circuit.library.standard_gates import (
 )
 from qiskit.circuit.bit import Bit
 from qiskit.circuit import Qubit, Clbit
-from .grammar import (
+from .ast import (
     Program,
     Version,
     Include,
@@ -86,10 +86,12 @@ from .grammar import (
     QuantumArgument,
     Expression,
     CalibrationDefinition,
-    Input,
+    IOModifier,
+    IO,
     PhysicalQubitIdentifier,
     AliasStatement,
 )
+from .printer import BasicPrinter
 
 
 class Exporter:
@@ -110,32 +112,22 @@ class Exporter:
         else:
             self.includes = includes
 
-    def dumps(self, circuit):
+    def dumps(self, circuit, indent="  "):
         """Convert the circuit to QASM 3, returning the result as a string."""
         with io.StringIO() as stream:
-            self.dump(circuit, stream)
+            self.dump(circuit, stream, indent=indent)
             return stream.getvalue()
 
-    def dump(self, circuit, stream):
+    def dump(self, circuit, stream, indent="  "):
         """Convert the circuit to QASM 3, dumping the result to a file or text stream."""
-        for line in self._iterate_lines(self.qasm_tree(circuit)):
-            stream.write(line)
-
-    def _iterate_lines(self, tree):
-        """Return an iterator over the lines of the QASM 3 program."""
-        for node in tree:
-            if isinstance(node, str):
-                yield node + "\n"
-            else:
-                yield from self._iterate_lines(node)
+        printer = BasicPrinter(stream, indent=indent)
+        printer.visit(self.qasm_tree(circuit))
 
     def qasm_tree(self, circuit):
         """Returns a QASM3 in a tree of lines"""
-        return (
-            Qasm3Builder(circuit, self.includes, self.basis_gates, self.disable_constants)
-            .build_program()
-            .qasm()
-        )
+        return Qasm3Builder(
+            circuit, self.includes, self.basis_gates, self.disable_constants
+        ).build_program()
 
 
 class GlobalNamespace:
@@ -354,8 +346,10 @@ class Qasm3Builder:
 
     def build_definition(self, instruction, builder):
         """Using a given definition builder, builds that definition."""
-        if hasattr(instruction, "_qasm3_definition"):
-            return instruction._qasm3_definition
+        try:
+            return instruction._define_qasm3()
+        except AttributeError:
+            pass
         self._flat_reg = True
         definition = builder(instruction)
         self._flat_reg = False
@@ -375,7 +369,7 @@ class Qasm3Builder:
             instruction.definition.qregs, instruction.definition
         )
         subroutineBlock = SubroutineBlock(
-            self.build_quantuminstructions(instruction.definition.data), ReturnStatement()
+            self.build_quantuminstructions(instruction.definition.data),
         )
         self.circuit_ctx.pop()
         return SubroutineDefinition(Identifier(name), subroutineBlock, quantumArgumentList)
@@ -414,7 +408,7 @@ class Qasm3Builder:
         """Builds a list of Inputs"""
         ret = []
         for param in self.circuit_ctx[-1].parameters:
-            ret.append(Input(Identifier("float[32]"), Identifier(param.name)))
+            ret.append(IO(IOModifier.input, Identifier("float[32]"), Identifier(param.name)))
         return ret
 
     def build_bitdeclarations(self):
@@ -498,7 +492,7 @@ class Qasm3Builder:
             condition_on = self.build_indexidentifier(condition[0])
         else:
             condition_on = Identifier(condition[0].name)
-        return ComparisonExpression(condition_on, EqualsOperator(), Integer(condition[1]))
+        return ComparisonExpression(condition_on, EqualsOperator(), Integer(int(condition[1])))
 
     def build_quantumArgumentList(self, qregs: [QuantumRegister], circuit=None):
         """Builds a quantumArgumentList"""
@@ -532,13 +526,13 @@ class Qasm3Builder:
             quantumGateName = Identifier(self.global_namespace[instruction[0]])
         indexIdentifierList = self.build_indexIdentifierlist(instruction[1])
         if self.disable_constants:
-            expressionList = [Expression(param) for param in instruction[0].params]
+            parameters = [Expression(param) for param in instruction[0].params]
         else:
-            expressionList = [
+            parameters = [
                 Expression(pi_check(param, output="qasm")) for param in instruction[0].params
             ]
 
-        return QuantumGateCall(quantumGateName, indexIdentifierList, expressionList)
+        return QuantumGateCall(quantumGateName, indexIdentifierList, parameters=parameters)
 
     def build_subroutinecall(self, instruction):
         """Builds a SubroutineCall"""
@@ -552,7 +546,9 @@ class Qasm3Builder:
         """Build a IndexIdentifier2"""
         reg, idx = self.find_bit(bit)
         if self._physical_qubit and isinstance(bit, Qubit):
-            return PhysicalQubitIdentifier(Identifier(self.circuit_ctx[-1].find_bit(bit).index))
+            return PhysicalQubitIdentifier(
+                Identifier(str(self.circuit_ctx[-1].find_bit(bit).index))
+            )
         if self._flat_reg:
             bit_name = f"{reg.name}_{idx}"
             return IndexIdentifier2(Identifier(bit_name))
