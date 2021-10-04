@@ -14,6 +14,7 @@
 
 """QASM3 Exporter"""
 
+import io
 from os.path import dirname, join, abspath, exists
 
 from qiskit.circuit.tools import pi_check
@@ -109,31 +110,29 @@ class Exporter:
         else:
             self.includes = includes
 
-    def dumps(self, quantumcircuit):
-        """Returns the QASM3 string."""
-        tree = self.qasm_tree(quantumcircuit)
-        return self._flatten_tree(tree)
+    def dumps(self, circuit):
+        """Convert the circuit to QASM 3, returning the result as a string."""
+        with io.StringIO() as stream:
+            self.dump(circuit, stream)
+            return stream.getvalue()
 
-    def dump(self, quantumcircuit, flo):
-        """TODO"""
-        tree = self.qasm_tree(quantumcircuit)
-        for chunk in self._flatten_tree(tree):
-            flo.write(chunk)
+    def dump(self, circuit, stream):
+        """Convert the circuit to QASM 3, dumping the result to a file or text stream."""
+        for line in self._iterate_lines(self.qasm_tree(circuit)):
+            stream.write(line)
 
-    def _flatten_tree(self, tree):
-        """walks the AST to create a single string."""
-        ret = []
-        for line in tree:
-            if isinstance(line, str):
-                ret.append(line + "\n")
+    def _iterate_lines(self, tree):
+        """Return an iterator over the lines of the QASM 3 program."""
+        for node in tree:
+            if isinstance(node, str):
+                yield node + "\n"
             else:
-                ret.append(self._flatten_tree(line))
-        return "".join(ret)
+                yield from self._iterate_lines(node)
 
-    def qasm_tree(self, quantumcircuit):
+    def qasm_tree(self, circuit):
         """Returns a QASM3 in a tree of lines"""
         return (
-            Qasm3Builder(quantumcircuit, self.includes, self.basis_gates, self.disable_constants)
+            Qasm3Builder(circuit, self.includes, self.basis_gates, self.disable_constants)
             .build_program()
             .qasm()
         )

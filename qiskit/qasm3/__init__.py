@@ -11,36 +11,55 @@
 # that they have been altered from the originals.
 
 """
-=========================
+==========================
 Qasm (:mod:`qiskit.qasm3`)
-=========================
+==========================
 
 .. currentmodule:: qiskit.qasm3
 
+.. autosummary::
+    :toctree: ../stubs/
+
+    Exporter
+    dumps
+    dump
 """
 
 from .exporter import Exporter
 
 
-def dumps(quantumcircuit):
-    """Serializes a :class:`~qiskit.circuit.QuantumCircuit` object in an OpenQASM3 string.
+def dumps(circuit, **kwargs):
+    """Serialize a :class:`~qiskit.circuit.QuantumCircuit` object in an OpenQASM3 string.
+
+    .. note::
+
+        This is a quick interface to the main :obj:`.Exporter` interface.  All keyword arguments to
+        this function are inherited from the constructor of that class, and if you have multiple
+        circuits to export, it will be faster to create an :obj:`.Exporter` instance, and use its
+        :obj:`.Exporter.dumps` method.
 
     Args:
-        quantumcircuit (QuantumCircuit): Circuit to serialize.
+        circuit (QuantumCircuit): Circuit to serialize.
 
     Returns:
         str: The OpenQASM3 serialization
     """
-    exporter = Exporter()
-    return exporter.dumps(quantumcircuit)
+    return Exporter(**kwargs).dumps(circuit)
 
 
-def dump(quantumcircuit, flo):
-    """Serializes a :class:`~qiskit.circuit.QuantumCircuit` object as a OpenQASM3 stream to file-like
-    object (a .write()-supporting object).
+def dump(circuit, stream, **kwargs):
+    """Serialize a :class:`~qiskit.circuit.QuantumCircuit` object as a OpenQASM3 stream to file-like
+    object.
+
+    .. note::
+
+        This is a quick interface to the main :obj:`.Exporter` interface.  All keyword arguments to
+        this function are inherited from the constructor of that class, and if you have multiple
+        circuits to export, it will be faster to create an :obj:`.Exporter` instance, and use its
+        :obj:`.Exporter.dump` method.
 
     Args:
-        quantumcircuit (QuantumCircuit): Circuit to serialize.
-        flo (TextIOBase): file-like object to dump the OpenQASM3 serialization
+        circuit (QuantumCircuit): Circuit to serialize.
+        stream (TextIOBase): stream-like object to dump the OpenQASM3 serialization
     """
-    Exporter().dump(quantumcircuit, flo)
+    return Exporter(**kwargs).dump(circuit, stream)
