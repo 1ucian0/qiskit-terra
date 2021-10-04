@@ -189,7 +189,7 @@ class GlobalNamespace:
             if includefile == "stdgates.inc":
                 self._data.update(self.qiskit_gates)
             else:
-                # TODO What do if an inc file is not stanard?
+                # TODO What do if an inc file is not standard?
                 # Should it be parsed?
                 pass
 
