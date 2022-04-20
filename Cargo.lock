@@ -97,6 +97,12 @@ name = "hashbrown"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
+
+[[package]]
+name = "hashbrown"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c21d40587b92fa6a6c6e3c1bdbf87d75511db5672f9c93175574b3a00df1758"
 dependencies = [
  "ahash",
  "rayon",
@@ -118,7 +124,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f647032dfaa1f8b6dc29bd3edb7bbef4861b8b8007ebb118d6db284fd59f6ee"
 dependencies = [
  "autocfg",
- "hashbrown",
+ "hashbrown 0.11.2",
 ]
 
 [[package]]
@@ -303,7 +309,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd86513975ed69bf3fb5d4a286cdcda66dbc56f84bdf4832b6c82b459f4417b2"
 dependencies = [
  "cfg-if",
- "hashbrown",
+ "hashbrown 0.12.0",
  "indoc",
  "libc",
  "num-complex",
@@ -362,7 +368,7 @@ name = "qiskit-terra"
 version = "0.20.0"
 dependencies = [
  "ahash",
- "hashbrown",
+ "hashbrown 0.12.0",
  "indexmap",
  "ndarray",
  "num-complex",
