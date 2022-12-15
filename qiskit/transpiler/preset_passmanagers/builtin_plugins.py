@@ -19,6 +19,10 @@ from qiskit.transpiler.passes import LookaheadSwap
 from qiskit.transpiler.passes import StochasticSwap
 from qiskit.transpiler.passes import SabreSwap
 from qiskit.transpiler.passes import Error
+from qiskit.transpiler.passes import TrivialLayout
+from qiskit.transpiler.passes import DenseLayout
+from qiskit.transpiler.passes import NoiseAdaptiveLayout
+from qiskit.transpiler.passes import SabreLayout
 from qiskit.transpiler.preset_passmanagers import common
 from qiskit.transpiler.preset_passmanagers.plugin import PassManagerStagePlugin
 
@@ -278,4 +282,14 @@ class NoneRoutingPassManager(PassManagerStagePlugin):
             coupling_map=coupling_map,
             seed_transpiler=seed_transpiler,
             use_barrier_before_measurement=True,
+        )
+
+
+class TrivialLayoutPassManager(PassManagerStagePlugin):
+    """Plugin class for trivial layout."""
+
+    def pass_manager(self, pass_manager_config, optimization_level=None) -> PassManager:
+        return common.generate_layout_passmanager(
+            TrivialLayout(pass_manager_config.coupling_map),
+            pass_manager_config.target,
         )

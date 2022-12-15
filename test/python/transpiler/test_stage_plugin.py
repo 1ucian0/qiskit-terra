@@ -88,6 +88,22 @@ class TestBuiltinPlugins(QiskitTestCase):
 
     @combine(
         optimization_level=list(range(4)),
+        layout_method=["trivial"],
+    )
+    def test_layout_plugins(self, optimization_level, layout_method):
+        """Test all layout plugins"""
+        qc = QuantumCircuit(4)
+        tqc = transpile(
+            qc,
+            coupling_map=CouplingMap.from_line(4),
+            optimization_level=optimization_level,
+            layout_method=layout_method,
+        )
+        qiskit.transpiler.preset_passmanagers.builtin_plugins: TrivialLayoutPassManager
+        self.assertEqual(tqc._layout.initial_layout, trivial_layout)
+
+    @combine(
+        optimization_level=list(range(4)),
         routing_method=["basic", "lookahead", "sabre", "stochastic"],
     )
     def test_routing_plugins(self, optimization_level, routing_method):

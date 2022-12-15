@@ -29,7 +29,7 @@ class TrivialLayout(AnalysisPass):
     Does not assume any ancilla.
     """
 
-    def __init__(self, coupling_map):
+    def __init__(self, coupling_map: object) -> object:
         """TrivialLayout initializer.
 
         Args:

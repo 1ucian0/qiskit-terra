@@ -227,6 +227,79 @@ def _apply_post_layout_condition(property_set):
     )
 
 
+def generate_layout_passmanager(
+    layout_pass,
+    target,
+    coupling_map=None,
+    vf2_call_limit=None,
+    backend_properties=None,
+    seed_transpiler=None,
+    check_trivial=False,
+    use_barrier_before_measurement=True,
+):
+    """Generate a layout :class:`~qiskit.transpiler.PassManager`
+
+    Args:
+        layout_pass (AnalysisPass): The pass which will perform the layout
+        target (Target): the :class:`~.Target` object representing the backend
+        coupling_map (CouplingMap): The coupling map of the backend to route
+            for
+        vf2_call_limit (int): The internal call limit for the vf2 post layout
+            pass. If this is ``None`` the vf2 post layout will not be run.
+        backend_properties (BackendProperties): Properties of a backend to
+            synthesize for (e.g. gate fidelities).
+        seed_transpiler (int): Sets random seed for the stochastic parts of
+            the transpiler.
+        check_trivial (bool): If set to true this will condition running the
+            :class:`~.VF2PostLayout` pass after routing on whether a trivial
+            layout was tried and was found to not be perfect. This is only
+            needed if the constructed pass manager runs :class:`~.TrivialLayout`
+            as a first layout attempt and uses it if it's a perfect layout
+            (as is the case with preset pass manager level 1).
+        use_barrier_before_measurement (bool): If true (the default) the
+            :class:`~.BarrierBeforeFinalMeasurements` transpiler pass will be run prior to the
+            specified pass in the ``routing_pass`` argument.
+    Returns:
+        PassManager: The layout pass manager
+    """
+
+    def _run_post_layout_condition(property_set):
+        # If we check trivial layout and the found trivial layout was not perfect also
+        # ensure VF2 initial layout was not used before running vf2 post layout
+        if not check_trivial or _layout_not_perfect(property_set):
+            vf2_stop_reason = property_set["VF2Layout_stop_reason"]
+            if vf2_stop_reason is None or vf2_stop_reason != VF2LayoutStopReason.SOLUTION_FOUND:
+                return True
+        return False
+
+    routing = PassManager()
+    routing.append(CheckMap(coupling_map))
+
+    def _swap_condition(property_set):
+        return not property_set["is_swap_mapped"]
+
+    if use_barrier_before_measurement:
+        routing.append([BarrierBeforeFinalMeasurements(), routing_pass], condition=_swap_condition)
+    else:
+        routing.append([routing_pass], condition=_swap_condition)
+
+    if (target is not None or backend_properties is not None) and vf2_call_limit is not None:
+        routing.append(
+            VF2PostLayout(
+                target,
+                coupling_map,
+                backend_properties,
+                seed_transpiler,
+                call_limit=vf2_call_limit,
+                strict_direction=False,
+            ),
+            condition=_run_post_layout_condition,
+        )
+        routing.append(ApplyLayout(), condition=_apply_post_layout_condition)
+
+    return routing
+
+
 def generate_routing_passmanager(
     routing_pass,
     target,
