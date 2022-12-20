@@ -293,3 +293,48 @@ class TrivialLayoutPassManager(PassManagerStagePlugin):
             TrivialLayout(pass_manager_config.coupling_map),
             pass_manager_config.target,
         )
+
+
+class DenseLayoutPassManager(PassManagerStagePlugin):
+    """Plugin class for dense layout."""
+
+    def pass_manager(self, pass_manager_config, optimization_level=None) -> PassManager:
+        coupling_map = pass_manager_config.coupling_map
+        backend_properties = pass_manager_config.backend_properties
+        target = pass_manager_config.target
+        return common.generate_layout_passmanager(
+            DenseLayout(coupling_map, backend_properties, target=target), target
+        )
+
+
+class NoiseAdaptiveLayoutPassManager(PassManagerStagePlugin):
+    """Plugin class for noise-adaptive layout ."""
+
+    def pass_manager(self, pass_manager_config, optimization_level=None) -> PassManager:
+        return common.generate_layout_passmanager(
+            NoiseAdaptiveLayout(pass_manager_config.backend_properties), pass_manager_config.target
+        )
+
+
+class SabreLayoutPassManager(PassManagerStagePlugin):
+    """Plugin class for sabre layout ."""
+
+    def pass_manager(self, pass_manager_config, optimization_level=None) -> PassManager:
+        coupling_map = pass_manager_config.coupling_map
+        target = pass_manager_config.target
+        seed_transpiler = pass_manager_config.seed_transpiler
+        skip_routing = (
+            pass_manager_config.routing_method is not None
+            and pass_manager_config.routing_method != "sabre"
+        )
+        return common.generate_layout_passmanager(
+            SabreLayout(
+                coupling_map,
+                max_iterations=4,
+                seed=seed_transpiler,
+                swap_trials=20,
+                layout_trials=20,
+                skip_routing=skip_routing,
+            ),
+            target,
+        )
