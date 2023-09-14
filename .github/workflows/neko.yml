@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   neko:
-    if: github.repository_owner == 'Qiskit'
+    if: github.repository_owner == 'Qiskit' or github.repository_owner == '1ucian0'
     name: Qiskit Neko Integration Tests
     runs-on: ubuntu-latest
     steps:
