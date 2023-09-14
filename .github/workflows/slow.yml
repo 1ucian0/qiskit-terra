@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   slow-tests:
-    if: github.repository_owner == 'Qiskit'
+    if: github.repository_owner == 'Qiskit' or github.repository_owner == '1ucian0'
     name: Full-test-run-with-slow
     runs-on: ubuntu-latest
     steps:
