@@ -1,0 +1,8 @@
+---
+upgrade:
+  - |
+    Accessing references from :class:`~qiskit.circuit.Qubit` and
+    :class:`~qiskit.circuit.Clbit` instances to their containing registers
+    via the :attr:`~qiskit.circuit.Qubit.register` or
+    :attr:`~qiskit.circuit.Qubit.index` properties has been removed. This attributes were deprecated in Qiskit 0.25 (qiskit-terra 0.17, released on April 1, 2021).
+    Instead, :class:`~qiskit.circuit.Register` objects can be queried to find the :class:`~qiskit.circuit.Bit` objects they contain.
