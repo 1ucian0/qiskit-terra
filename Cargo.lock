@@ -861,9 +861,9 @@ checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 
 [[package]]
 name = "oq3_lexer"
-version = "0.0.7"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4e867d2797100b8068715e26566a5567c598424d7eddf7118c6b38bc3b15633"
+checksum = "22636ceef19477755e6ac525421135774f7e20bb00102f8a2e9ad02a181dd0c3"
 dependencies = [
  "unicode-properties",
  "unicode-xid",
@@ -871,9 +871,9 @@ dependencies = [
 
 [[package]]
 name = "oq3_parser"
-version = "0.0.7"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf260dea71b56b405d091d476748c1f9b0a4d22b4ec9af416e002e2df25613f9"
+checksum = "56767fedc4a84a5dae446d7257e3a589eedd82412b9939f61e06e22973c82386"
 dependencies = [
  "drop_bomb",
  "oq3_lexer",
@@ -882,9 +882,9 @@ dependencies = [
 
 [[package]]
 name = "oq3_semantics"
-version = "0.0.7"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5ba220b91ff849190d53b296711774f761b7e06744b16a9c8f19fc2fb37de47"
+checksum = "8b18f54c18dd4e0a0f3a03e4d3cb591a98598230def5c00fddbaf200057d5ef0"
 dependencies = [
  "boolenum",
  "hashbrown 0.14.3",
@@ -895,9 +895,9 @@ dependencies = [
 
 [[package]]
 name = "oq3_source_file"
-version = "0.0.7"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83a81fd0c1c100ad8d7a23711c897791d693c3f5b1f3d044cb8c5770766f819c"
+checksum = "6061b0ee3d2fb01d9272f6665e9fd769bed099f6c117fc0a8cf623fb7bb3c141"
 dependencies = [
  "ariadne",
  "oq3_syntax",
@@ -905,9 +905,9 @@ dependencies = [
 
 [[package]]
 name = "oq3_syntax"
-version = "0.0.7"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7da2ef9a591d77eee43e972e79fc95c218545e5e79b93738d20479d8d7627ec"
+checksum = "108c7f52af6651be44aa305c16e9c5e497b5a581e02b4aa593d8ee7b3dc52306"
 dependencies = [
  "cov-mark",
  "either",
