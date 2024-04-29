@@ -4,6 +4,17 @@ version = 3
 
 [[package]]
 name = "ahash"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "891477e0c6a8957309ee5c45a6368af3ae14bb510732d2684ffa19af310920f9"
+dependencies = [
+ "getrandom",
+ "once_cell",
+ "version_check",
+]
+
+[[package]]
+name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
@@ -618,14 +629,17 @@ name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
+dependencies = [
+ "ahash 0.7.8",
+]
 
 [[package]]
 name = "hashbrown"
-version = "0.14.3"
+version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
+checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "allocator-api2",
  "rayon",
 ]
@@ -668,7 +682,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "168fb715dda47215e360912c096649d23d58bf392ac62f73919e831745e40f26"
 dependencies = [
  "equivalent",
- "hashbrown 0.14.3",
+ "hashbrown 0.14.5",
  "rayon",
 ]
 
@@ -902,7 +916,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d5ba220b91ff849190d53b296711774f761b7e06744b16a9c8f19fc2fb37de47"
 dependencies = [
  "boolenum",
- "hashbrown 0.14.3",
+ "hashbrown 0.14.5",
  "oq3_source_file",
  "oq3_syntax",
  "rowan",
@@ -1077,7 +1091,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a8b1990bd018761768d5e608a13df8bd1ac5f678456e0f301bb93e5f3ea16b"
 dependencies = [
  "cfg-if",
- "hashbrown 0.14.3",
+ "hashbrown 0.12.3",
  "indexmap 2.2.6",
  "indoc",
  "libc",
@@ -1142,7 +1156,7 @@ dependencies = [
 name = "qiskit-qasm2"
 version = "1.1.0"
 dependencies = [
- "hashbrown 0.14.3",
+ "hashbrown 0.14.5",
  "pyo3",
 ]
 
@@ -1150,7 +1164,7 @@ dependencies = [
 name = "qiskit-qasm3"
 version = "1.1.0"
 dependencies = [
- "hashbrown 0.14.3",
+ "hashbrown 0.14.5",
  "indexmap 2.2.6",
  "oq3_semantics",
  "pyo3",
@@ -1160,11 +1174,11 @@ dependencies = [
 name = "qiskit_accelerate"
 version = "1.1.0"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "approx",
  "faer",
  "faer-core",
- "hashbrown 0.14.3",
+ "hashbrown 0.14.5",
  "indexmap 2.2.6",
  "ndarray",
  "num-bigint",
@@ -1442,7 +1456,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32a58fa8a7ccff2aec4f39cc45bf5f985cec7125ab271cf681c279fd00192b49"
 dependencies = [
  "countme",
- "hashbrown 0.14.3",
+ "hashbrown 0.14.5",
  "memoffset",
  "rustc-hash",
  "text-size",
@@ -1482,9 +1496,9 @@ version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "529027dfaa8125aa61bb7736ae9484f41e8544f448af96918c8da6b1def7f57b"
 dependencies = [
- "ahash",
+ "ahash 0.8.11",
  "fixedbitset",
- "hashbrown 0.14.3",
+ "hashbrown 0.14.5",
  "indexmap 2.2.6",
  "num-traits",
  "petgraph",
