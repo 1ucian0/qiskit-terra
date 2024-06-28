@@ -39,7 +39,7 @@ from qiskit.providers.models import (
     PulseDefaults,
     Command,
 )
-from qiskit.qobj import PulseQobjInstruction, PulseLibraryItem
+from qiskit.qobj import PulseLibraryItem
 from qiskit.utils import optionals as _optionals
 
 # Noise default values/ranges for duration and error of supported
@@ -244,7 +244,7 @@ class GenericBackendV2(BackendV2):
 
     def _get_calibration_sequence(
         self, inst: str, num_qubits: int, qargs: tuple[int]
-    ) -> list[PulseQobjInstruction]:
+    ) -> list[PulseInstruction]:
         """Return calibration pulse sequence for given instruction (defined by name and num_qubits)
         acting on qargs.
         """
@@ -254,25 +254,25 @@ class GenericBackendV2(BackendV2):
         # 1q gates vs 2q gates vs measurement instructions.
         if inst == "measure":
             sequence = [
-                PulseQobjInstruction(
+                PulseInstruction(
                     name="acquire",
                     duration=1792,
                     t0=0,
                     qubits=qargs,
                     memory_slot=qargs,
                 )
-            ] + [PulseQobjInstruction(name=pulse_library[1].name, ch=f"m{i}", t0=0) for i in qargs]
+            ] + [PulseInstruction(name=pulse_library[1].name, ch=f"m{i}", t0=0) for i in qargs]
             return sequence
         if num_qubits == 1:
             return [
-                PulseQobjInstruction(name="fc", ch=f"u{qargs[0]}", t0=0, phase="-P0"),
-                PulseQobjInstruction(name=pulse_library[0].name, ch=f"d{qargs[0]}", t0=0),
+                PulseInstruction(name="fc", ch=f"u{qargs[0]}", t0=0, phase="-P0"),
+                PulseInstruction(name=pulse_library[0].name, ch=f"d{qargs[0]}", t0=0),
             ]
         return [
-            PulseQobjInstruction(name=pulse_library[1].name, ch=f"d{qargs[0]}", t0=0),
-            PulseQobjInstruction(name=pulse_library[2].name, ch=f"u{qargs[0]}", t0=0),
-            PulseQobjInstruction(name=pulse_library[1].name, ch=f"d{qargs[1]}", t0=0),
-            PulseQobjInstruction(name="fc", ch=f"d{qargs[1]}", t0=0, phase=2.1),
+            PulseInstruction(name=pulse_library[1].name, ch=f"d{qargs[0]}", t0=0),
+            PulseInstruction(name=pulse_library[2].name, ch=f"u{qargs[0]}", t0=0),
+            PulseInstruction(name=pulse_library[1].name, ch=f"d{qargs[1]}", t0=0),
+            PulseInstruction(name="fc", ch=f"d{qargs[1]}", t0=0, phase=2.1),
         ]
 
     def _generate_calibration_defaults(self) -> PulseDefaults:
@@ -290,7 +290,7 @@ class GenericBackendV2(BackendV2):
         for inst in ["delay", "reset"]:
             calibration_buffer.remove(inst)
 
-        # List of calibration commands (generated from sequences of PulseQobjInstructions)
+        # List of calibration commands (generated from sequences of PulseInstructions)
         # corresponding to each calibrated instruction. Note that the calibration pulses
         # are different for 1q gates vs 2q gates vs measurement instructions.
         cmd_def = []
@@ -571,3 +571,246 @@ class GenericBackendV2(BackendV2):
         if qubits in control_channels_map:
             return control_channels_map[qubits]
         return []
+
+
+class PulseInstruction:
+    """A class representing a pulse instruction. Based on the old PulseQobjInstruction"""
+
+    _COMMON_ATTRS = [
+        "ch",
+        "conditional",
+        "val",
+        "phase",
+        "frequency",
+        "duration",
+        "qubits",
+        "memory_slot",
+        "register_slot",
+        "label",
+        "type",
+        "pulse_shape",
+        "parameters",
+    ]
+
+    def __init__(
+        self,
+        name,
+        t0,
+        ch=None,
+        conditional=None,
+        val=None,
+        phase=None,
+        duration=None,
+        qubits=None,
+        memory_slot=None,
+        register_slot=None,
+        kernels=None,
+        discriminators=None,
+        label=None,
+        type=None,
+        pulse_shape=None,
+        parameters=None,
+        frequency=None,
+    ):
+        """Instantiate a new PulseInstruction object.
+
+        Args:
+            name (str): The name of the instruction
+            t0 (int): Pulse start time in integer **dt** units.
+            ch (str): The channel to apply the pulse instruction.
+            conditional (int): The register to use for a conditional for this
+                instruction
+            val (complex): Complex value to apply, bounded by an absolute value
+                of 1.
+            phase (float): if a ``fc`` instruction, the frame change phase in
+                radians.
+            frequency (float): if a ``sf`` instruction, the frequency in Hz.
+            duration (int): The duration of the pulse in **dt** units.
+            qubits (list): A list of ``int`` representing the qubits the
+                instruction operates on
+            memory_slot (list): If a ``measure`` instruction this is a list
+                of ``int`` containing the list of memory slots to store the
+                measurement results in (must be the same length as qubits).
+                If a ``bfunc`` instruction this is a single ``int`` of the
+                memory slot to store the boolean function result in.
+            register_slot (list): If a ``measure`` instruction this is a list
+                of ``int`` containing the list of register slots in which to
+                store the measurement results (must be the same length as
+                qubits). If a ``bfunc`` instruction this is a single ``int``
+                of the register slot in which to store the result.
+            kernels (list): List of :class:`QobjMeasurementOption` objects
+                defining the measurement kernels and set of parameters if the
+                measurement level is 1 or 2. Only used for ``acquire``
+                instructions.
+            discriminators (list): A list of :class:`QobjMeasurementOption`
+                used to set the discriminators to be used if the measurement
+                level is 2. Only used for ``acquire`` instructions.
+            label (str): Label of instruction
+            type (str): Type of instruction
+            pulse_shape (str): The shape of the parametric pulse
+            parameters (dict): The parameters for a parametric pulse
+        """
+        self.name = name
+        self.t0 = t0
+        if ch is not None:
+            self.ch = ch
+        if conditional is not None:
+            self.conditional = conditional
+        if val is not None:
+            self.val = val
+        if phase is not None:
+            self.phase = phase
+        if frequency is not None:
+            self.frequency = frequency
+        if duration is not None:
+            self.duration = duration
+        if qubits is not None:
+            self.qubits = qubits
+        if memory_slot is not None:
+            self.memory_slot = memory_slot
+        if register_slot is not None:
+            self.register_slot = register_slot
+        if kernels is not None:
+            self.kernels = kernels
+        if discriminators is not None:
+            self.discriminators = discriminators
+        if label is not None:
+            self.label = label
+        if type is not None:
+            self.type = type
+        if pulse_shape is not None:
+            self.pulse_shape = pulse_shape
+        if parameters is not None:
+            self.parameters = parameters
+
+    def to_dict(self):
+        """Return a dictionary format representation of the Instruction.
+
+        Returns:
+            dict: The dictionary form of the PulseInstruction.
+        """
+        out_dict = {"name": self.name, "t0": self.t0}
+        for attr in self._COMMON_ATTRS:
+            if hasattr(self, attr):
+                out_dict[attr] = getattr(self, attr)
+        if hasattr(self, "kernels"):
+            out_dict["kernels"] = [x.to_dict() for x in self.kernels]
+        if hasattr(self, "discriminators"):
+            out_dict["discriminators"] = [x.to_dict() for x in self.discriminators]
+        return out_dict
+
+    def __repr__(self):
+        out = f'PulseInstruction(name="{self.name}", t0={self.t0}'
+        for attr in self._COMMON_ATTRS:
+            attr_val = getattr(self, attr, None)
+            if attr_val is not None:
+                if isinstance(attr_val, str):
+                    out += f', {attr}="{attr_val}"'
+                else:
+                    out += f", {attr}={attr_val}"
+        out += ")"
+        return out
+
+    def __str__(self):
+        out = f"Instruction: {self.name}\n"
+        out += f"\t\tt0: {self.t0}\n"
+        for attr in self._COMMON_ATTRS:
+            if hasattr(self, attr):
+                out += f"\t\t{attr}: {getattr(self, attr)}\n"
+        return out
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create a new PulseExperimentConfig object from a dictionary.
+
+        Args:
+            data (dict): A dictionary for the experiment config
+
+        Returns:
+            PulseInstruction: The object from the input dictionary.
+        """
+        schema = {
+            "discriminators": MeasurementOption,
+            "kernels": MeasurementOption,
+        }
+        skip = ["t0", "name"]
+
+        # Pulse instruction data is nested dictionary.
+        # To avoid deepcopy and avoid mutating the source object, create new dict here.
+        in_data = {}
+        for key, value in data.items():
+            if key in skip:
+                continue
+            if key == "parameters":
+                # This is flat dictionary of parametric pulse parameters
+                formatted_value = value.copy()
+                if "amp" in formatted_value:
+                    value = formatted_value["amp"]
+                    if isinstance(value, list) and len(value) == 2:
+                        formatted_value["amp"] = complex(value[0], value[1])
+                    elif isinstance(value, complex):
+                        formatted_value["amp"] = value
+                    else:
+                        raise TypeError(f"{value} is not in a valid complex number format.")
+                in_data[key] = formatted_value
+                continue
+            if key in schema:
+                if isinstance(value, list):
+                    in_data[key] = list(map(schema[key].from_dict, value))
+                else:
+                    in_data[key] = schema[key].from_dict(value)
+            else:
+                in_data[key] = value
+
+        return cls(data["name"], data["t0"], **in_data)
+
+    def __eq__(self, other):
+        if isinstance(other, PulseInstruction):
+            if self.to_dict() == other.to_dict():
+                return True
+        return False
+
+
+class MeasurementOption:
+    """An individual measurement option. Copied from QobjMeasurementOption"""
+
+    def __init__(self, name, params=None):
+        """Instantiate a new MeasurementOption object.
+
+        Args:
+            name (str): The name of the measurement option
+            params (list): The parameters of the measurement option.
+        """
+        self.name = name
+        if params is not None:
+            self.params = params
+
+    def to_dict(self):
+        """Return a dict format representation of the MeasurementOption.
+
+        Returns:
+            dict: The dictionary form of the QasmMeasurementOption.
+        """
+        out_dict = {"name": self.name}
+        if hasattr(self, "params"):
+            out_dict["params"] = self.params
+        return out_dict
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create a new QobjMeasurementOption object from a dictionary.
+
+        Args:
+            data (dict): A dictionary for the experiment config
+
+        Returns:
+            QobjMeasurementOption: The object from the input dictionary.
+        """
+        name = data.pop("name")
+        return cls(name, **data)
+
+    def __eq__(self, other):
+        if isinstance(other, MeasurementOption):
+            if self.to_dict() == other.to_dict():
+                return True
+        return False
