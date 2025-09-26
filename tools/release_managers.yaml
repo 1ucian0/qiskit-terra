@@ -12,7 +12,6 @@ queue:
     - eliarbel
     - raynelfss
   followup:
-    - jakelishman
     - Cryoris
     - alexanderivrii
     - ShellyGarion
@@ -22,7 +21,13 @@ queue:
     - kevinhartman
     - eliarbel
     - raynelfss
+    - jakelishman
 history:
+  2.2.1:
+    date: Sep 26, 2025
+    type: followup
+    managers:
+      - jakelishman
   2.2.0:
     date: Sep 19, 2025
     type: followup
@@ -147,7 +152,7 @@ history:
     date: Oct 2, 2024
     type: followup
     managers:
-      - jakelishma
+      - jakelishman
   0.46.3:
     date: Sep 27, 2024
     type: followup
