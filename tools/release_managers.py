@@ -1,16 +1,23 @@
 import argparse
+import sys
+
 from ruamel.yaml import YAML
+from dateutil.parser import parse
+from datetime import datetime, timedelta
 from packaging.version import Version
 
 
 class Release:
-    def __init__(self, version: Version, type, managers, date=None):
+    def __init__(self, version: Version, type, managers=None, date=None):
         self.version = version
         self.date = date
         self.type = type
         self.managers = managers
+
+    @property
+    def done(self):
         # The release was done (it has a date) or it was NOT done yet (it has no date)
-        self.done = date is not None
+        return self.date is not None
 
     def __str__(self):
         ret = ""
@@ -26,6 +33,10 @@ class Release:
         else:
             ret += f" initiating the {self.version.major}.{self.version.minor} series."
         return ret
+
+    def done_by(self, managers):
+        self.managers = managers
+        self.date = datetime.today().strftime("%b %d, %Y")
 
 
 class ReleaseManagerYamlFile:
@@ -51,13 +62,21 @@ class ReleaseManagerYamlFile:
     def history(self):
         return self.data["history"]
 
-    def update_queue(self, managers, kind):
-        if self.type == "major":
-            pass  # TODO continue from here
+    def update_queue(self, release):
+        if not release.done:
+            sys.exit("attempt to update the queue with a release that it was not done")
+        for release_manager in reversed(release.managers):
+            self.to_the_end_of_the_queue("followup", release_manager)
+            if release.type == "first":
+                self.to_the_end_of_the_queue("first", release_manager)
 
-    def add_release(self, release_data):
-        self.history.update(release_data)
-        self.update_queue(release_data["managers"])
+    def add_release(self, release):
+        self.history.insert(
+            pos=0,
+            key=str(release.version),
+            value={"date": release.date, "type": release.type, "managers": release.managers},
+        )
+        self.update_queue(release)
 
     def team(self):
         ret = set()
@@ -65,13 +84,15 @@ class ReleaseManagerYamlFile:
             ret.update(people_in_queue)
         return ret
 
-    def get_release(self, version: Version):
+    def get_release(self, version: Version, include_potential_rm=True):
         release = self.find_release(version)
         if release:
             return release
         release_type = "first" if self.is_first(version) else "followup"
-        self.next_in_queue(release_type, 2)
-        return Release(version, type=release_type, managers=self.next_in_queue(release_type, 2))
+        if include_potential_rm:
+            return Release(version, type=release_type, managers=self.next_in_queue(release_type, 2))
+        else:
+            return Release(version, type=release_type)
 
     def find_release(self, version):
         str_version = str(version)
@@ -85,11 +106,58 @@ class ReleaseManagerYamlFile:
             major_minor_versions.add((V.major, V.minor))
         return (version.major, version.minor) not in major_minor_versions
 
-    def next_in_queue(self, queue_name, n):
+    def next_in_queue(self, queue_name, n, exclude_rules=None):
         """
         Returns a list of the n next user in the queue with name queue_name
+
+        exclude_rules:
+            (<queue_name>, <positions>)
+            ('first', 2): Default for queue_name==followup. If a person is first or second in the 'first' queue
+            ('history', <amount of days, -1 never>)
+            ('released', -1): Default for queue_name==first. If the person never did a release
+            ('released', 120): Default for all situations. If the person did a release in the last 120 days
         """
-        return self.data["queue"][queue_name][:n]
+        if exclude_rules is None:
+            exclude_rules = [("released", 120)]
+            if queue_name == "followup":
+                exclude_rules.append(("first", 2))
+            if queue_name == "first":
+                exclude_rules.append(("released", -1))
+
+        def matches_rule(u, r):
+            category, arg = r
+            prelude = f"{user} excluded:"
+            if category == "released":
+                for release in self.history.values():
+                    if u in release["managers"]:
+                        if arg == -1:
+                            print(f"{prelude} user did not released before")
+                            return True
+                        else:
+                            if datetime.today() - timedelta(days=arg) < parse(release["date"]):
+                                print(
+                                    f"{prelude} user was release manager less than {arg} days ago"
+                                )
+                                return True
+            else:
+                if u in self.data["queue"][category][:arg]:
+                    print(f"{prelude} user is in the first {arg} places in the '{category}' queue")
+                    return True
+            return False
+
+        retlist = list()
+        for user in self.data["queue"][queue_name]:
+            for exclude_rule in exclude_rules:
+                if matches_rule(user, exclude_rule):
+                    break
+            else:
+                retlist.append(user)
+                if len(retlist) >= n:
+                    return retlist
+
+    def to_the_end_of_the_queue(self, queue, release_manager):
+        self._data["queue"][queue].remove(release_manager)
+        self._data["queue"][queue].append(release_manager)
 
 
 def who_command(args, db):
@@ -97,40 +165,40 @@ def who_command(args, db):
 
 
 def release_command(args, db):
-    # TODO
-    version = args.version
-    release_manager = args.by  # if version in db.history:
-    #     print(f'{version} was already released by {db.history[version]["managers"]}')
-    #     return
-    #
-    # new_release = Release(args.version, release_managers=args.rm)
-    # print("new release", new_release.to_yaml_dict())
-    # db.add_release(new_release)
-    # db.refresh_file()
-    pass
+    release_managers = args.release_managers
+    release = db.get_release(args.version, include_potential_rm=False)
+    if release.done:
+        print(f"{release.version} was already released on {release.date}")
+        return
+    release.done_by(release_managers)
+    db.add_release(release)
+    db.refresh_file()
 
 
 db = ReleaseManagerYamlFile("release_managers.yaml")
 parser = argparse.ArgumentParser()
+parser.add_argument(dest="version", metavar="<version>", help="qiskit version", type=Version)
 
-"""who --version 1.4.1   (who's releasing coming 1.4.1)"""
+"""
+release_managers.py 1.4.1 who  # who's releasing coming 1.4.1
+release_managers.py 11.0 who   # who's next in line to be the release manager for major 11.0 release
+release_managers.py 1.4.99 who # who's next in line to be the release manager for patch 1.4.99 release
+"""
 subparsers = parser.add_subparsers()
 
 parser_who = subparsers.add_parser("who", help="who should/did release <version>?")
 parser_who.set_defaults(func=who_command)
-parser_who.add_argument("-v", "--version", metavar="<version>", help="qiskit version", type=Version)
 
-"""release --version 1.4.1  --by eliarbel --by 1ucian0    (record a release by release master/s)"""
+"""
+release_managers.py 3.0 release -h  # help on how to record the release of 3.0
+release_managers.py 1.4.1 release eliarbel 1ucian0  # record a release by release managers/s)
+"""
 parser_release = subparsers.add_parser(
     "release", help="record that <version> was released by <release_manager>"
 )
 parser_release.set_defaults(func=release_command)
 parser_release.add_argument(
-    "-v", "--version", metavar="<version>", help="qiskit version", type=Version
-)
-parser_release.add_argument(
-    "-b",
-    "--by",
+    "release_managers",
     nargs="+",
     action="extend",
     metavar="person",
