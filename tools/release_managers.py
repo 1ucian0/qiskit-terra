@@ -6,6 +6,7 @@ from dateutil.parser import parse
 from datetime import datetime, timedelta
 from packaging.version import Version
 
+gh_team_directory="Qiskit/teams/terra-release"
 
 class Release:
     def __init__(self, version: Version, type, managers=None, date=None):
@@ -174,11 +175,25 @@ def release_command(args, db):
     db.add_release(release)
     db.refresh_file()
 
+class update_team_action(argparse.Action):
+    def __init__(self, option_strings, dest, gh_team_directory, db, **kwargs):
+        self._gh_team_directory = gh_team_directory
+        self._db = db
+        return super().__init__(option_strings, dest, nargs=0, default=argparse.SUPPRESS, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string, **kwargs):
+        raise NotImplementedError(f"TODO: fetch {self._gh_team_directory} and update {self._db.filename}")
+        parser.exit()
 
 db = ReleaseManagerYamlFile("release_managers.yaml")
 parser = argparse.ArgumentParser()
-parser.add_argument(dest="version", metavar="<version>", help="qiskit version", type=Version)
 
+"release_managers.py -ut  # updates the release manager team"
+parser.add_argument('-ut', '--update-team', action=update_team_action,
+                    gh_team_directory=gh_team_directory, db=db,
+                    help=f"fetches {gh_team_directory} and update the release managers")
+
+parser.add_argument(dest="version", metavar="<version>", help="qiskit version", type=Version)
 """
 release_managers.py 1.4.1 who  # who's releasing coming 1.4.1
 release_managers.py 11.0 who   # who's next in line to be the release manager for major 11.0 release
@@ -207,7 +222,5 @@ parser_release.add_argument(
 )
 
 args = parser.parse_args()
-
-db = ReleaseManagerYamlFile("release_managers.yaml")
 
 args.func(args, db)
