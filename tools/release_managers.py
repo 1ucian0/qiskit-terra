@@ -5,6 +5,7 @@ from ruamel.yaml import YAML
 from dateutil.parser import parse
 from datetime import datetime, timedelta
 from packaging.version import Version
+from os import path
 import requests
 
 gh_team_directory = "Qiskit/teams/terra-release"
@@ -38,8 +39,11 @@ class Release:
         return ret
 
     def done_by(self, managers):
+        response = requests.get(f"https://pypi.org/pypi/qiskit/{self.version}/json")
+        data = response.json()
+        date = max([datetime.fromisoformat(u["upload_time_iso_8601"]) for u in data["urls"]])
         self.managers = managers
-        self.date = datetime.today().strftime("%b %d, %Y")
+        self.date = date.strftime("%b %d, %Y")
 
 
 class ReleaseManagerYamlFile:
@@ -191,7 +195,7 @@ class update_team_action(argparse.Action):
         parser.exit()
 
 
-db = ReleaseManagerYamlFile("release_managers.yaml")
+db = ReleaseManagerYamlFile(path.join(path.dirname(__file__), "release_managers.yaml"))
 parser = argparse.ArgumentParser()
 
 "release_managers.py -ut  # updates the release manager team"

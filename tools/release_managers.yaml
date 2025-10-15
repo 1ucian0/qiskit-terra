@@ -10,7 +10,6 @@ queue:
   - eliarbel
   - raynelfss
   followup:
-  - Cryoris
   - alexanderivrii
   - ShellyGarion
   - mtreinish
@@ -19,7 +18,13 @@ queue:
   - eliarbel
   - raynelfss
   - jakelishman
+  - Cryoris
 history:
+  1.4.5:
+    date: Oct 13, 2025
+    type: followup
+    managers:
+    - Cryoris
   2.2.1:
     date: Sep 26, 2025
     type: followup
