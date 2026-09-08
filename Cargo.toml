@@ -19,7 +19,7 @@ bytemuck = { version = "1.25", features = ["extern_crate_alloc"] }
 bitfield-struct = "0.13.0"
 indexmap.version = "2.10.0"
 hashbrown.version = "0.15.5"
-num-bigint = "0.4"
+num-bigint = "0.5"
 num-complex = { version = "0.4", features = ["bytemuck"] }
 nalgebra = "0.35"
 faer = "0.24"
