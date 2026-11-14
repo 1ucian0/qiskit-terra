@@ -623,7 +623,7 @@ class TestBackendSamplerV2(QiskitTestCase):
             backend.level1_sigma / np.sqrt(shots) * 6,
         )
 
-    def test_run_binary_memory(self):
+    def test_run_bitstring_memory(self):
         """Test a backend reporting level 2 memory as plain bitstrings.
 
         The samples used to be decoded as hexadecimal, so ``"11"`` was read as
@@ -631,7 +631,7 @@ class TestBackendSamplerV2(QiskitTestCase):
         https://github.com/Qiskit/qiskit/issues/16160.
         """
 
-        class BinaryMemoryBackend(BasicSimulator):
+        class BitstringMemoryBackend(BasicSimulator):
             """BasicSimulator reporting the memory as bitstrings instead of hexadecimal."""
 
             def run(self, run_input, **options):
@@ -646,7 +646,7 @@ class TestBackendSamplerV2(QiskitTestCase):
         qc.x(0)
         qc.x(1)
         qc.measure_all()
-        sampler = BackendSamplerV2(backend=BinaryMemoryBackend())
+        sampler = BackendSamplerV2(backend=BitstringMemoryBackend(), memory_format="bitstring")
         result = sampler.run([qc], shots=10).result()
         self.assertEqual(result[0].data.meas.get_counts(), {"11": 10})
 
