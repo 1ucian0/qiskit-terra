@@ -1757,7 +1757,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f0e759e014e630f90af745101b614f761306ddc541681e546649068e25ec1b9"
 dependencies = [
  "byteorder",
- "num-bigint",
+ "num-bigint 0.4.8",
  "py_literal",
 ]
 
@@ -1768,7 +1768,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a01a88a1d2f89d362475ad16f34de3994f7c86b12259236f5d33537b040bcd4"
 dependencies = [
  "byteorder",
- "num-bigint",
+ "num-bigint 0.4.8",
  "num-complex",
  "py_literal",
 ]
@@ -1788,7 +1788,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.8",
  "num-complex",
  "num-integer",
  "num-iter",
@@ -1801,6 +1801,16 @@ name = "num-bigint"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c89e69e7e0f03bea5ef08013795c25018e101932225a656383bd384495ecc367"
+dependencies = [
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-bigint"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93e7820bc0a80a0238e650327316f929ba18d5be054b647490a3a6a339f3e7c0"
 dependencies = [
  "num-integer",
  "num-traits",
@@ -1857,7 +1867,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f83d14da390562dca69fc84082e73e548e1ad308d24accdedd2720017cb37824"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.8",
  "num-integer",
  "num-traits",
 ]
@@ -2240,7 +2250,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "102df7a3d46db9d3891f178dcc826dc270a6746277a9ae6436f8d29fd490a8e1"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.8",
  "num-complex",
  "num-traits",
  "pest",
@@ -2256,7 +2266,7 @@ dependencies = [
  "hashbrown 0.17.1",
  "indexmap",
  "libc",
- "num-bigint",
+ "num-bigint 0.4.8",
  "num-complex",
  "num-traits",
  "once_cell",
@@ -2331,7 +2341,7 @@ dependencies = [
  "itertools 0.15.0",
  "nalgebra 0.35.0",
  "ndarray",
- "num-bigint",
+ "num-bigint 0.5.1",
  "num-complex",
  "numpy",
  "pulp",
@@ -2340,7 +2350,7 @@ dependencies = [
  "qiskit-quantum-info",
  "qiskit-transpiler",
  "qiskit-util",
- "rand 0.10.3",
+ "rand 0.10.4",
  "rand_distr 0.6.0",
  "rand_pcg",
  "rayon",
@@ -2382,7 +2392,7 @@ dependencies = [
  "hashbrown 0.17.1",
  "nalgebra 0.35.0",
  "ndarray",
- "num-bigint",
+ "num-bigint 0.5.1",
  "num-complex",
  "num-traits",
  "pyo3",
@@ -2393,7 +2403,7 @@ dependencies = [
  "qiskit-quantum-info",
  "qiskit-transpiler",
  "qiskit-util",
- "rand 0.10.3",
+ "rand 0.10.4",
  "rand_pcg",
  "smallvec",
  "thiserror 2.0.21",
@@ -2427,7 +2437,7 @@ dependencies = [
  "nom",
  "nom-language",
  "nom-unicode",
- "num-bigint",
+ "num-bigint 0.5.1",
  "num-complex",
  "num-traits",
  "numpy",
@@ -2461,7 +2471,7 @@ dependencies = [
  "qiskit-quantum-info",
  "qiskit-synthesis",
  "qiskit-util",
- "rand 0.10.3",
+ "rand 0.10.4",
  "rand_distr 0.6.0",
  "rand_pcg",
  "rayon",
@@ -2520,7 +2530,7 @@ dependencies = [
  "num-complex",
  "num-traits",
  "qiskit-circuit",
- "rand 0.10.3",
+ "rand 0.10.4",
  "rand_philox",
  "rustworkx-core",
  "thiserror 2.0.21",
@@ -2556,7 +2566,7 @@ name = "qiskit-qasm2"
 version = "2.7.0-dev"
 dependencies = [
  "hashbrown 0.17.1",
- "num-bigint",
+ "num-bigint 0.5.1",
  "pyo3",
  "qiskit-circuit",
 ]
@@ -2586,7 +2596,7 @@ dependencies = [
  "hashbrown 0.17.1",
  "ndarray",
  "npyz 0.9.1",
- "num-bigint",
+ "num-bigint 0.5.1",
  "num-complex",
  "num-traits",
  "numpy",
@@ -2618,7 +2628,7 @@ dependencies = [
  "pyo3",
  "qiskit-circuit",
  "qiskit-util",
- "rand 0.10.3",
+ "rand 0.10.4",
  "rand_distr 0.6.0",
  "rand_pcg",
  "rayon",
@@ -2645,7 +2655,7 @@ dependencies = [
  "qiskit-circuit",
  "qiskit-quantum-info",
  "qiskit-util",
- "rand 0.10.3",
+ "rand 0.10.4",
  "rand_distr 0.6.0",
  "rand_pcg",
  "rayon",
@@ -2679,7 +2689,7 @@ dependencies = [
  "qiskit-quantum-info",
  "qiskit-synthesis",
  "qiskit-util",
- "rand 0.10.3",
+ "rand 0.10.4",
  "rand_pcg",
  "rayon",
  "rayon-cond",
@@ -2752,9 +2762,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.10.3"
+version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65c9fb96cbc91e3478eaae79a69fcd3f1ae4ad052e471fe6732fff548984b4af"
+checksum = "8f6fa277c67e6ea590466f04c3fe82cb509f0864fe470643e5570de9514a9b11"
 dependencies = [
  "chacha20",
  "getrandom 0.4.3",
@@ -2822,7 +2832,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d431c2703ccf129de4d45253c03f49ebb22b97d6ad79ee3ecfc7e3f4862c1d8"
 dependencies = [
  "num-traits",
- "rand 0.10.3",
+ "rand 0.10.4",
 ]
 
 [[package]]
@@ -3042,7 +3052,7 @@ dependencies = [
  "num-traits",
  "petgraph 0.8.3",
  "priority-queue",
- "rand 0.10.3",
+ "rand 0.10.4",
  "rand_distr 0.6.0",
  "rand_pcg",
  "rayon",
@@ -3348,7 +3358,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
@@ -3565,7 +3575,7 @@ checksum = "bed99139f7dac9b5cfe5f17be4d66dc7079a34dee1d74bcc77217119240e267c"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
- "rand 0.10.3",
+ "rand 0.10.4",
  "wasm-bindgen",
 ]
 
