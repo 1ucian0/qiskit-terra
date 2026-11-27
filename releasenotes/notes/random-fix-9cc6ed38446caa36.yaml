@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    The :mod:`qiskit.circuit` module has been fixed and is now free of bugs.
